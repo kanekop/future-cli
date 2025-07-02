@@ -136,6 +136,17 @@
         const commandHistory = [];
         let historyIndex = -1;
 
+        // [NEW] Define the error message lines as a constant for reuse
+        const errorLines = [
+            { text: '<span class="log-fatal">[FATAL]</span> Core components missing. Future cannot be initialized.'},
+            { text: '        Required flags: --vision, --commit'},
+            { text: '' },
+            { text: 'USAGE:'},
+            { text: '  ./boot_future.sh --vision "a world where..." --commit "what you will do now"'},
+            { text: '' },
+            { text: '<span class="log-tip"># Tip: A vision without a commit is just a dream.</span>'}
+        ];
+
         // --- Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
             terminal.addEventListener('click', () => {
@@ -209,6 +220,12 @@
                 const vision = match[1];
                 const commit = match[2];
                 runSuccessSequence(vision, commit);
+            } else if (command === './boot_future.sh') {
+                // [NEW] Handle the specific case of running the command without arguments
+                lineElement.classList.add('shareable-log');
+                runErrorSequence(() => {
+                    setTimeout(createInputLine, 200);
+                });
             } else {
                 if (command) {
                     addLine(`zsh: command not found: ${escapeHtml(command.split(' ')[0])}`);
@@ -218,32 +235,32 @@
         }
 
         // --- Animation Sequences ---
-        function runIntroAnimation() {
-            const introLines = [
-                { text: '$ ./boot_future.sh' },
-                { text: '<span class="log-fatal">[FATAL]</span> Core components missing. Future cannot be initialized.', delay: 500 },
-                { text: '        Required flags: --vision, --commit', delay: 100 },
-                { text: '' },
-                { text: 'USAGE:', delay: 100 },
-                { text: '  ./boot_future.sh --vision "a world where..." --commit "what you will do now"', delay: 100 },
-                { text: '' },
-                { text: '<span class="log-tip"># Tip: A vision without a commit is just a dream.</span>', delay: 100 }
-            ];
-            
-            commandHistory.push('./boot_future.sh');
-            
+        // [NEW] A dedicated function to display the error message sequence
+        function runErrorSequence(onComplete) {
             let delay = 0;
-            introLines.forEach((line, index) => {
+            errorLines.forEach((line, index) => {
                 setTimeout(() => {
                     const lineElement = addLine(line.text);
                     lineElement.classList.add('shareable-log');
-
-                    if (index === introLines.length - 1) {
-                        setTimeout(createInputLine, 200);
+                    if (index === errorLines.length - 1 && onComplete) {
+                        onComplete();
                     }
                 }, delay);
-                delay += line.delay || 0;
+                delay += 100;
             });
+        }
+
+        function runIntroAnimation() {
+            commandHistory.push('./boot_future.sh');
+            
+            const firstLine = addLine('$ ./boot_future.sh');
+            firstLine.classList.add('shareable-log');
+
+            setTimeout(() => {
+                runErrorSequence(() => {
+                    setTimeout(createInputLine, 200);
+                });
+            }, 500);
         }
 
         function runSuccessSequence(vision, commit) {
@@ -308,7 +325,6 @@
                     const shareText = `I've initiated my future!\n\nVision: ${vision}\nCommit: ${commit}\n\nBoot your own future at ${window.location.href}\n#BootYourFuture`;
                     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
 
-                    // [MODIFIED] Swapped the order of the buttons
                     shareContainer.innerHTML = `
                         <p>Your future has been initiated! Share this moment.</p>
                         <div class="share-buttons">
