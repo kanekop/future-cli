@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Future-CLI</title>
+    <title>the-future.sh</title>
     
     <!-- ライブラリとフォントの読み込み -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -194,8 +194,10 @@
 
         // --- コマンドを処理するメインロジック ---
         function processCommand(command) {
-            // --vision "..." と --commit "..." を抽出する正規表現
-            const regex = /--vision\s+"([^"]+)"\s+--commit\s+"([^"]+)"/;
+            // [BUG FIX] 正規表現を修正
+            // 1. "./boot_future.sh" があってもなくても良いようにする (?:...)?
+            // 2. シングルクォート(')とダブルクォート(")の両方に対応する ["']
+            const regex = /(?:.\/boot_future\.sh\s+)?--vision\s+["']([^"']+)["']\s+--commit\s+["']([^"']+)["']/;
             const match = command.match(regex);
 
             if (match) {
@@ -203,7 +205,11 @@
                 const commit = match[2];
                 runSuccessSequence(vision, commit);
             } else {
-                addLine(`zsh: command not found: ${escapeHtml(command.split(' ')[0])}`, 'log-fatal');
+                // エラーメッセージのコマンド名を、入力の最初の単語から取得
+                const commandName = command.trim().split(' ')[0] || '';
+                if (commandName) {
+                    addLine(`zsh: command not found: ${escapeHtml(commandName)}`, 'log-fatal');
+                }
                 createInputLine();
             }
         }
