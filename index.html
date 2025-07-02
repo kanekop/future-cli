@@ -133,6 +133,8 @@
         const headerContainer = document.getElementById('header-container');
         const terminal = document.getElementById('terminal');
         let currentInput = null;
+        const commandHistory = [];
+        let historyIndex = -1;
 
         // --- Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -162,15 +164,36 @@
             
             currentInput = line.querySelector('.terminal-input');
             currentInput.focus();
+            historyIndex = commandHistory.length;
 
             currentInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
-                    const command = currentInput.value;
+                    const command = currentInput.value.trim();
+                    if (command) {
+                        commandHistory.push(command);
+                    }
                     const parent = currentInput.parentElement;
                     parent.innerHTML = `<span class="prompt">$</span><span>${escapeHtml(command)}</span>`;
                     currentInput.disabled = true;
                     currentInput = null;
                     processCommand(command, parent);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (historyIndex > 0) {
+                        historyIndex--;
+                        currentInput.value = commandHistory[historyIndex];
+                        currentInput.setSelectionRange(currentInput.value.length, currentInput.value.length);
+                    }
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (historyIndex < commandHistory.length - 1) {
+                        historyIndex++;
+                        currentInput.value = commandHistory[historyIndex];
+                        currentInput.setSelectionRange(currentInput.value.length, currentInput.value.length);
+                    } else {
+                        historyIndex = commandHistory.length;
+                        currentInput.value = '';
+                    }
                 }
             });
             scrollToBottom();
@@ -187,9 +210,8 @@
                 const commit = match[2];
                 runSuccessSequence(vision, commit);
             } else {
-                const commandName = command.trim().split(' ')[0] || '';
-                if (commandName) {
-                    addLine(`zsh: command not found: ${escapeHtml(commandName)}`);
+                if (command) {
+                    addLine(`zsh: command not found: ${escapeHtml(command.split(' ')[0])}`);
                 }
                 createInputLine();
             }
@@ -208,10 +230,14 @@
                 { text: '<span class="log-tip"># Tip: A vision without a commit is just a dream.</span>', delay: 100 }
             ];
             
+            commandHistory.push('./boot_future.sh');
+            
             let delay = 0;
             introLines.forEach((line, index) => {
                 setTimeout(() => {
-                    addLine(line.text);
+                    const lineElement = addLine(line.text);
+                    lineElement.classList.add('shareable-log');
+
                     if (index === introLines.length - 1) {
                         setTimeout(createInputLine, 200);
                     }
@@ -251,14 +277,10 @@
             generatingLine.classList.add('shareable-log');
 
             setTimeout(() => {
-                // 1. Create a temporary container
                 const snapshotContainer = document.createElement('div');
                 snapshotContainer.style.position = 'absolute';
                 snapshotContainer.style.left = '-9999px';
-                
-                // [MODIFIED] Set display to 'inline-block' to make the container's width fit its content
                 snapshotContainer.style.display = 'inline-block';
-                
                 snapshotContainer.style.padding = '20px';
                 snapshotContainer.style.boxSizing = 'border-box';
                 snapshotContainer.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--background-color');
@@ -267,24 +289,17 @@
                 snapshotContainer.style.lineHeight = '1.6';
                 snapshotContainer.style.color = getComputedStyle(document.documentElement).getPropertyValue('--text-color');
 
-
-                // 2. Clone shareable lines into the container
                 const linesToShare = document.querySelectorAll('.shareable-log');
                 linesToShare.forEach(line => {
                     snapshotContainer.appendChild(line.cloneNode(true));
                 });
 
-                // 3. Add to body for rendering
                 document.body.appendChild(snapshotContainer);
 
-                // 4. Capture the temporary container
                 html2canvas(snapshotContainer, { logging: false, backgroundColor: null }).then(canvas => {
                     const imageUrl = canvas.toDataURL('image/png');
-                    
-                    // 5. Clean up
                     document.body.removeChild(snapshotContainer);
 
-                    // --- Display share buttons ---
                     headerContainer.innerHTML = '';
 
                     const shareContainer = document.createElement('div');
@@ -293,11 +308,12 @@
                     const shareText = `I've initiated my future!\n\nVision: ${vision}\nCommit: ${commit}\n\nBoot your own future at ${window.location.href}\n#BootYourFuture`;
                     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
 
+                    // [MODIFIED] Swapped the order of the buttons
                     shareContainer.innerHTML = `
                         <p>Your future has been initiated! Share this moment.</p>
                         <div class="share-buttons">
-                            <a href="${twitterUrl}" target="_blank" class="share-button">Share on X</a>
                             <a href="${imageUrl}" download="the-future-sh.png" class="share-button">Download Image</a>
+                            <a href="${twitterUrl}" target="_blank" class="share-button">Share on X</a>
                         </div>
                         <img src="${imageUrl}" alt="A snapshot of the initiated future in the-future.sh">
                     `;
