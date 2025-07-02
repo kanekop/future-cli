@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Future-CLI</title>
+    
+    <!-- ライブラリとフォントの読み込み -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/typed.js@2.1.0/dist/typed.umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" xintegrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoVBL5gI9kLmbG4dGzcSTjpTJpe1pQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <style>
+        /* --- 全体のスタイル --- */
+        :root {
+            --background-color: #0d1117; /* GitHub Dark風の黒 */
+            --text-color: #c9d1d9;
+            --prompt-color: #58a6ff; /* 青みがかったプロンプト */
+            --accent-color: #56d364; /* 緑色のアクセント */
+            --error-color: #f85149; /* 赤色のエラー */
+            --font-family: 'Roboto Mono', 'SF Mono', 'Courier New', monospace;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            font-family: var(--font-family);
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        /* --- ターミナル全体のコンテナ --- */
+        #terminal {
+            padding: 20px;
+            box-sizing: border-box;
+            height: 100%;
+            overflow-y: auto;
+            cursor: text;
+        }
+
+        /* --- ターミナルの各行 --- */
+        .line {
+            display: flex;
+            white-space: pre-wrap; /* 長いテキストでも折り返す */
+            word-break: break-all;
+        }
+
+        .prompt {
+            color: var(--prompt-color);
+            margin-right: 0.5em;
+            flex-shrink: 0; /* プロンプトが縮まないように */
+        }
+        
+        .command-input-container {
+            display: flex;
+            flex-grow: 1;
+        }
+
+        /* --- ユーザーの入力欄 --- */
+        .terminal-input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-color);
+            font-family: inherit;
+            font-size: inherit;
+            caret-color: var(--accent-color);
+            flex-grow: 1;
+            padding: 0;
+        }
+
+        /* --- 色付きのテキスト --- */
+        .log-fatal { color: var(--error-color); }
+        .log-info { color: var(--prompt-color); }
+        .log-ok { color: var(--accent-color); }
+        .log-tip { color: #8b949e; } /* グレーのヒント */
+
+        /* --- シェア機能のコンテナ --- */
+        #share-container {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            background-color: #161b22;
+        }
+
+        #share-container img {
+            max-width: 100%;
+            border-radius: 6px;
+            border: 1px solid #30363d;
+        }
+
+        .share-buttons {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .share-button {
+            background-color: var(--accent-color);
+            color: var(--background-color);
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            transition: opacity 0.2s;
+        }
+        .share-button:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div id="terminal">
+        <!-- JavaScriptによってコンテンツがここに追加されます -->
+    </div>
+
+    <script>
+        // --- DOM要素と設定 ---
+        const terminal = document.getElementById('terminal');
+        let currentInput = null; // 現在の入力フィールドを保持
+
+        // --- 初期化処理 ---
+        document.addEventListener('DOMContentLoaded', () => {
+            terminal.addEventListener('click', () => {
+                if (currentInput) {
+                    currentInput.focus();
+                }
+            });
+            runIntroAnimation();
+        });
+
+        // --- ターミナルに行を追加するヘルパー関数 ---
+        function addLine(text, className = '') {
+            const line = document.createElement('div');
+            if (className) {
+                line.className = className;
+            }
+            line.innerHTML = text; // innerHTMLを使って色付きタグを解釈させる
+            terminal.appendChild(line);
+            scrollToBottom();
+        }
+        
+        // --- タイプライター風に行を追加する関数 ---
+        function typeLine(elementId, text, onComplete) {
+            const line = document.createElement('div');
+            line.id = elementId;
+            terminal.appendChild(line);
+
+            new Typed(`#${elementId}`, {
+                strings: [text],
+                typeSpeed: 20,
+                showCursor: false,
+                onComplete: () => {
+                    if (onComplete) onComplete();
+                }
+            });
+        }
+
+        // --- 新しい入力行を作成する関数 ---
+        function createInputLine() {
+            const line = document.createElement('div');
+            line.className = 'line command-input-container';
+            line.innerHTML = `<span class="prompt">$</span><input type="text" class="terminal-input" autofocus>`;
+            terminal.appendChild(line);
+            
+            currentInput = line.querySelector('.terminal-input');
+            currentInput.focus();
+
+            currentInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const command = currentInput.value;
+                    // 入力されたコマンドを表示し、入力欄を無効化
+                    const parent = currentInput.parentElement;
+                    parent.innerHTML = `<span class="prompt">$</span><span>${escapeHtml(command)}</span>`;
+                    currentInput.disabled = true;
+                    currentInput = null;
+                    
+                    processCommand(command);
+                }
+            });
+            scrollToBottom();
+        }
+
+        // --- コマンドを処理するメインロジック ---
+        function processCommand(command) {
+            // --vision "..." と --commit "..." を抽出する正規表現
+            const regex = /--vision\s+"([^"]+)"\s+--commit\s+"([^"]+)"/;
+            const match = command.match(regex);
+
+            if (match) {
+                const vision = match[1];
+                const commit = match[2];
+                runSuccessSequence(vision, commit);
+            } else {
+                addLine(`zsh: command not found: ${escapeHtml(command.split(' ')[0])}`, 'log-fatal');
+                createInputLine();
+            }
+        }
+
+        // --- イントロダクション（失敗例）のアニメーション ---
+        function runIntroAnimation() {
+            const introLines = [
+                { text: '$ ./boot_future.sh' },
+                { text: '<span class="log-fatal">[FATAL]</span> Core components missing. Future cannot be initialized.', delay: 500 },
+                { text: '        Required flags: --vision, --commit', delay: 100 },
+                { text: '' },
+                { text: 'USAGE:', delay: 100 },
+                { text: '  ./boot_future.sh --vision "a world where..." --commit "what you will do now"', delay: 100 },
+                { text: '' },
+                { text: '<span class="log-tip"># Tip: A vision without a commit is just a dream.</span>', delay: 100 }
+            ];
+            
+            let delay = 0;
+            introLines.forEach((line, index) => {
+                setTimeout(() => {
+                    // Typed.jsは使わず、シンプルに一行ずつ表示
+                    addLine(line.text);
+                    if (index === introLines.length - 1) {
+                        // 最後のアニメーションが終わったら入力行を作成
+                        setTimeout(createInputLine, 200);
+                    }
+                }, delay);
+                delay += line.delay || 0;
+            });
+        }
+
+        // --- 成功時のアニメーションシーケンス ---
+        function runSuccessSequence(vision, commit) {
+            const successLines = [
+                { text: 'Initializing future with new parameters...' },
+                { text: `<span class="log-info">[INFO]</span> Vision locked: "${escapeHtml(vision)}"` },
+                { text: `<span class="log-info">[INFO]</span> First commit registered: "${escapeHtml(commit)}"` },
+                { text: `<span class="log-ok">[ OK ]</span> Boot sequence complete.` },
+                { text: `` },
+                { text: `Future process started successfully. (PID: ${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}${(new Date().getDate()).toString().padStart(2, '0')})`},
+                { text: `Daemonizing... Your future is now running in the background. Keep committing.` }
+            ];
+
+            let delay = 0;
+            successLines.forEach((line, index) => {
+                setTimeout(() => {
+                    addLine(line.text);
+                    if (index === successLines.length - 1) {
+                        setTimeout(generateShareableImage, 500, vision, commit);
+                    }
+                }, delay);
+                delay += (line.text.length * 15) + 100; // テキストの長さに応じて遅延
+            });
+        }
+        
+        // --- シェア用の画像を生成 ---
+        function generateShareableImage(vision, commit) {
+            addLine('Generating shareable snapshot...');
+            // html2canvasでターミナルを画像に変換
+            html2canvas(document.body, {
+                backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--background-color'),
+                windowWidth: document.body.scrollWidth,
+                windowHeight: document.body.scrollHeight
+            }).then(canvas => {
+                const imageUrl = canvas.toDataURL('image/png');
+                
+                // シェアコンテナを作成
+                const shareContainer = document.createElement('div');
+                shareContainer.id = 'share-container';
+                
+                const shareText = `私の未来を起動しました！\n\nVision: ${vision}\nCommit: ${commit}\n\nあなたも未来を起動しよう！\n#BootYourFuture #未来を起動せよ`;
+                const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(window.location.href)}`;
+
+                shareContainer.innerHTML = `
+                    <p>あなたの未来が起動しました！この瞬間をシェアしよう。</p>
+                    <img src="${imageUrl}" alt="Future-CLI result">
+                    <div class="share-buttons">
+                        <a href="${twitterUrl}" target="_blank" class="share-button">Xでシェア</a>
+                        <a href="${imageUrl}" download="future-cli.png" class="share-button">画像をダウンロード</a>
+                    </div>
+                `;
+                terminal.appendChild(shareContainer);
+                scrollToBottom();
+            });
+        }
+
+        // --- ユーティリティ関数 ---
+        function scrollToBottom() {
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function escapeHtml(unsafe) {
+            return unsafe
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
