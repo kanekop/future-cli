@@ -171,6 +171,29 @@
         let interactiveCommit = '';
         let currentLanguage = 'en'; // default to English
         
+        // File system structure
+        const fileSystem = {
+            'README.md': {
+                content: [
+                    '# the-future.sh',
+                    '',
+                    'A tiny CLI simulator to boot your future.',
+                    '',
+                    'Run ./boot_future.sh --vision "your vision" --commit "your action"'
+                ]
+            },
+            'vision.txt': {
+                content: ['Your vision awaits. Use ./boot_future.sh to define it.']
+            },
+            'boot_future.sh': {
+                content: null, // Special handling - cannot be displayed
+                protected: true
+            }
+        };
+        
+        // Available files for ls and tab completion
+        const availableFiles = Object.keys(fileSystem);
+        
         // i18n translations
         const i18n = {
             en: {
@@ -229,12 +252,6 @@
                 cmdPwd: '  pwd                                                       - Print working directory',
                 cmdWhoami: '  whoami                                                    - Display current user',
                 cmdHelpCmd: '  help                                                      - Show this help message',
-                catReadmeTitle: '# the-future.sh',
-                catReadmeDesc: '> A tiny CLI simulator to boot your future.',
-                catReadmeMore: 'Visit https://github.com/yourusername/the-future.sh for full documentation.',
-                catVision: 'Your vision awaits. Use ./boot_future.sh to define it.',
-                catNotFound: 'No such file or directory',
-                catMissing: 'missing file operand',
                 firstCheckpoint: 'First checkpoint',
                 milestone: 'Milestone',
                 drivenBy: 'Driven by',
@@ -296,12 +313,6 @@
                 cmdPwd: '  pwd                                                       - 現在のディレクトリ',
                 cmdWhoami: '  whoami                                                    - 現在のユーザー',
                 cmdHelpCmd: '  help                                                      - このヘルプを表示',
-                catReadmeTitle: '# the-future.sh',
-                catReadmeDesc: '> 未来を起動する小さなCLIシミュレーター',
-                catReadmeMore: '詳細は https://github.com/yourusername/the-future.sh をご覧ください。',
-                catVision: 'あなたのビジョンが待っています。./boot_future.sh を使って定義してください。',
-                catNotFound: 'そのようなファイルまたはディレクトリはありません',
-                catMissing: 'ファイルオペランドがありません',
                 firstCheckpoint: '最初のチェックポイント',
                 milestone: 'マイルストーン',
                 drivenBy: '動機',
@@ -351,6 +362,132 @@
             scrollToBottom();
             return line;
         }
+        
+        // Tab completion logic
+        function handleTabCompletion(currentValue) {
+            const parts = currentValue.split(' ');
+            
+            // Handle tab completion for cat command with files
+            if (parts[0] === 'cat' && parts.length <= 2) {
+                // If there's a space after cat, show files
+                if (currentValue.includes(' ')) {
+                    const partial = parts[1] || '';
+                    
+                    // Find matching files
+                    const matches = availableFiles.filter(file => 
+                        file.toLowerCase().startsWith(partial.toLowerCase())
+                    );
+                    
+                    if (matches.length === 0) {
+                        // No matches - do nothing
+                        return { action: 'none' };
+                    } else if (matches.length === 1) {
+                        // Single match - auto-complete
+                        return { 
+                            action: 'complete',
+                            value: `cat ${matches[0]}`
+                        };
+                    } else {
+                        // Multiple matches - show options
+                        return {
+                            action: 'show-options',
+                            options: matches
+                        };
+                    }
+                }
+            }
+            
+            // Handle tab completion for commands
+            if (parts.length === 1 && !currentValue.includes(' ')) {
+                const commands = ['cat', 'ls', 'clear', 'pwd', 'whoami', 'help', './boot_future.sh', 'boot_future.sh'];
+                const partial = parts[0];
+                
+                const matches = commands.filter(cmd => 
+                    cmd.toLowerCase().startsWith(partial.toLowerCase())
+                );
+                
+                if (matches.length === 1) {
+                    return { 
+                        action: 'complete',
+                        value: matches[0]
+                    };
+                } else if (matches.length > 1) {
+                    return {
+                        action: 'show-options',
+                        options: matches
+                    };
+                }
+            }
+            
+            return { action: 'none' };
+        }
+        
+        // Display tab completion options
+        function displayTabOptions(options) {
+            addLine(options.join('   '));
+        }
+        
+        // Attach input event listeners
+        function attachInputListeners(input) {
+            input.addEventListener('keydown', handleInputKeydown);
+        }
+        
+        // Handle keydown events for input
+        function handleInputKeydown(e) {
+            const input = e.target;
+            
+            if (e.key === 'Enter') {
+                const command = input.value.trim();
+                if (command) {
+                    commandHistory.push(command);
+                }
+                const parent = input.parentElement;
+                parent.innerHTML = `<span class="prompt">$</span><span>${escapeHtml(command)}</span>`;
+                input.disabled = true;
+                currentInput = null;
+                processCommand(command, parent);
+            } else if (e.key === 'Tab') {
+                e.preventDefault();
+                const result = handleTabCompletion(input.value);
+                
+                switch(result.action) {
+                    case 'complete':
+                        input.value = result.value;
+                        input.setSelectionRange(input.value.length, input.value.length);
+                        break;
+                    case 'show-options':
+                        // Save current line
+                        const currentLine = input.parentElement;
+                        currentLine.innerHTML = `<span class="prompt">$</span> ${escapeHtml(input.value)}`;
+                        
+                        // Show options
+                        displayTabOptions(result.options);
+                        
+                        // Create new input line with preserved value
+                        createInputLine();
+                        currentInput.value = input.value;
+                        currentInput.setSelectionRange(input.value.length, input.value.length);
+                        break;
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    input.value = commandHistory[historyIndex];
+                    input.setSelectionRange(input.value.length, input.value.length);
+                }
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (historyIndex < commandHistory.length - 1) {
+                    historyIndex++;
+                    input.value = commandHistory[historyIndex];
+                    input.setSelectionRange(input.value.length, input.value.length);
+                } else {
+                    historyIndex = commandHistory.length;
+                    input.value = '';
+                }
+            }
+        }
 
         function createInputLine() {
             const line = document.createElement('div');
@@ -362,36 +499,7 @@
             currentInput.focus();
             historyIndex = commandHistory.length;
 
-            currentInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    const command = currentInput.value.trim();
-                    if (command) {
-                        commandHistory.push(command);
-                    }
-                    const parent = currentInput.parentElement;
-                    parent.innerHTML = `<span class="prompt">$</span><span>${escapeHtml(command)}</span>`;
-                    currentInput.disabled = true;
-                    currentInput = null;
-                    processCommand(command, parent);
-                } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    if (historyIndex > 0) {
-                        historyIndex--;
-                        currentInput.value = commandHistory[historyIndex];
-                        currentInput.setSelectionRange(currentInput.value.length, currentInput.value.length);
-                    }
-                } else if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    if (historyIndex < commandHistory.length - 1) {
-                        historyIndex++;
-                        currentInput.value = commandHistory[historyIndex];
-                        currentInput.setSelectionRange(currentInput.value.length, currentInput.value.length);
-                    } else {
-                        historyIndex = commandHistory.length;
-                        currentInput.value = '';
-                    }
-                }
-            });
+            attachInputListeners(currentInput);
             scrollToBottom();
         }
 
@@ -403,21 +511,46 @@
             
             // Handle shell commands
             if (cmd === 'ls') {
-                addLine('boot_future.sh  README.md  vision.txt');
+                addLine(availableFiles.join('   '));
                 createInputLine();
                 return;
             } else if (cmd === 'cat') {
-                if (parts[1] === 'README.md') {
-                    addLine(t('catReadmeTitle'));
-                    addLine(t('catReadmeDesc'));
+                // Handle missing operand
+                if (!parts[1]) {
+                    addLine('cat: missing operand');
+                    addLine('Try \'cat --help\' for more information.');
+                    createInputLine();
+                    return;
+                }
+                
+                // Handle --help
+                if (parts[1] === '--help') {
+                    addLine('Usage: cat [FILE]...');
+                    addLine('Concatenate FILE(s) to standard output.');
                     addLine('');
-                    addLine(t('catReadmeMore'));
-                } else if (parts[1] === 'vision.txt') {
-                    addLine(t('catVision'));
-                } else if (parts[1]) {
-                    addLine(`cat: ${parts[1]}: ${t('catNotFound')}`);
+                    addLine('Examples:');
+                    addLine('  cat README.md    Display contents of README.md');
+                    addLine('  cat vision.txt   Display contents of vision.txt');
+                    createInputLine();
+                    return;
+                }
+                
+                // Trim any extra spaces
+                const filename = parts.slice(1).join(' ').trim();
+                
+                // Check if file exists
+                if (fileSystem[filename]) {
+                    const file = fileSystem[filename];
+                    
+                    // Handle protected files
+                    if (file.protected) {
+                        addLine(`<span class="log-fatal">cat: ${filename}: Permission denied (source is protected)</span>`);
+                    } else if (file.content) {
+                        // Display file content
+                        file.content.forEach(line => addLine(line));
+                    }
                 } else {
-                    addLine(`cat: ${t('catMissing')}`);
+                    addLine(`cat: ${filename}: No such file or directory`);
                 }
                 createInputLine();
                 return;
