@@ -474,7 +474,9 @@
                 { text: t('usage')},
                 { text: t('usageExample')},
                 { text: '' },
-                { text: `<span class="log-tip">${t('tip')}</span>`}
+                { text: `<span class="log-tip">${t('tip')}</span>`},
+                { text: '' },
+                { text: `<span class="log-info">💡 ${t('newUserHint')}</span>`}
             ];
         }
 
@@ -825,18 +827,12 @@
                     // Handle bare ./boot_future.sh
                     consecutiveErrors++;
                     runErrorSequence(() => {
-                        if (consecutiveErrors >= 3) {
-                            showGuideHint();
-                        }
                         setTimeout(createInputLine, 200);
                     });
                 } else {
                     // Invalid arguments
                     consecutiveErrors++;
                     runErrorSequence(() => {
-                        if (consecutiveErrors >= 3) {
-                            showGuideHint();
-                        }
                         setTimeout(createInputLine, 200);
                     });
                 }
@@ -845,9 +841,6 @@
                 if (command) {
                     consecutiveErrors++;
                     addLine(`zsh: ${t('commandNotFound')}: ${escapeHtml(command.split(' ')[0])}`);
-                    if (consecutiveErrors >= 3) {
-                        showGuideHint();
-                    }
                 }
                 createInputLine();
             }
@@ -1142,8 +1135,8 @@
                     shareContainer.id = 'share-container';
                     
                     const shareText = currentLanguage === 'ja' 
-                        ? `未来を起動しました！\n\nビジョン: ${vision}\nコミット: ${commit}\n\nあなたも未来を起動しよう: ${window.location.href}\n#BootYourFuture`
-                        : `I've initiated my future!\n\nVision: ${vision}\nCommit: ${commit}\n\nBoot your own future at ${window.location.href}\n#BootYourFuture`;
+                        ? `思い描く未来：\n\nビジョン: ${vision}\nコミット: ${commit}\n\n自分の未来を思い描こう: ${window.location.href}\n#BootYourFuture`
+                        : `My envisioned future:\n\nVision: ${vision}\nCommit: ${commit}\n\nEnvision your own future at ${window.location.href}\n#BootYourFuture`;
                     
                     // Social media share URLs
                     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
@@ -1152,7 +1145,7 @@
                     const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}&quote=${encodeURIComponent(shareText)}`;
                     
                     // LinkedIn share
-                    const linkedinTitle = currentLanguage === 'ja' ? '未来を起動しました！' : "I've initiated my future!";
+                    const linkedinTitle = currentLanguage === 'ja' ? '思い描く未来：' : "My envisioned future:";
                     const linkedinSummary = currentLanguage === 'ja' 
                         ? `ビジョン: ${vision}\nコミット: ${commit}`
                         : `Vision: ${vision}\nCommit: ${commit}`;
