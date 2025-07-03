@@ -121,6 +121,39 @@
             opacity: 0.8;
         }
         
+        .share-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .share-button[title] {
+            position: relative;
+        }
+        
+        .share-button[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            margin-bottom: 5px;
+            pointer-events: none;
+            opacity: 0;
+            animation: tooltipFade 0.2s ease-in-out forwards;
+        }
+        
+        @keyframes tooltipFade {
+            to {
+                opacity: 1;
+            }
+        }
+        
         /* Social media specific colors */
         .share-twitter {
             background-color: #1DA1F2;
@@ -339,7 +372,11 @@
                 shareTimeout: 'Auto-selected: No (timeout)',
                 shareLastNoData: 'No future to share. Boot your future first with ./future.sh',
                 shareLastPrompt: 'Share your last booted future?',
-                newUserHint: "New here? Type 'guide' for beginner-friendly mode!"
+                newUserHint: "New here? Type 'guide' for beginner-friendly mode!",
+                copyButton: 'Copy to Clipboard',
+                copySuccess: 'Copied!',
+                copyFailed: 'Failed to copy. Please try downloading instead.',
+                copyTooltip: 'Right-click the image to save it'
             },
             ja: {
                 fatal: '[致命的エラー] コアコンポーネントが不足しています。未来を起動できません。',
@@ -410,7 +447,11 @@
                 shareTimeout: '自動選択: いいえ（タイムアウト）',
                 shareLastNoData: '共有する未来がありません。まず ./future.sh で未来を起動してください。',
                 shareLastPrompt: '最後に起動した未来を共有しますか？',
-                newUserHint: "初めてですか？'guide'と入力すると初心者向けモードが始まります！"
+                newUserHint: "初めてですか？'ガイド'と入力すると初心者向けモードが始まります！",
+                copyButton: 'クリップボードにコピー',
+                copySuccess: 'コピーしました！',
+                copyFailed: 'コピーに失敗しました。ダウンロードをお試しください。',
+                copyTooltip: '画像を右クリックで保存できます'
             }
         };
         
@@ -1117,19 +1158,46 @@
                         : `Vision: ${vision}\nCommit: ${commit}`;
                     const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}&title=${encodeURIComponent(linkedinTitle)}&summary=${encodeURIComponent(linkedinSummary)}`;
 
-                    shareContainer.innerHTML = `
-                        <p>${t('shareText')}</p>
-                        <div class="share-buttons">
-                            <a href="${imageUrl}" download="the-future-sh.png" class="share-button">${t('downloadButton')}</a>
-                            <a href="${twitterUrl}" target="_blank" class="share-button share-twitter">${t('shareButton')}</a>
-                            <a href="${facebookUrl}" target="_blank" class="share-button share-facebook">${t('shareFacebook')}</a>
-                            <a href="${linkedinUrl}" target="_blank" class="share-button share-linkedin">${t('shareLinkedin')}</a>
-                        </div>
-                        <img src="${imageUrl}" alt="A snapshot of the initiated future in the-future.sh">
-                    `;
+                    // Check for Clipboard API support
+                    const supportsClipboard = navigator.clipboard && window.ClipboardItem;
+                    
+                    if (supportsClipboard) {
+                        shareContainer.innerHTML = `
+                            <p>${t('shareText')}</p>
+                            <div class="share-buttons">
+                                <button id="copyButton" class="share-button" title="${t('copyTooltip')}">📋 ${t('copyButton')}</button>
+                                <a href="${twitterUrl}" target="_blank" class="share-button share-twitter">${t('shareButton')}</a>
+                                <a href="${facebookUrl}" target="_blank" class="share-button share-facebook">${t('shareFacebook')}</a>
+                                <a href="${linkedinUrl}" target="_blank" class="share-button share-linkedin">${t('shareLinkedin')}</a>
+                            </div>
+                            <img src="${imageUrl}" alt="A snapshot of the initiated future in the-future.sh">
+                        `;
+                    } else {
+                        // Fallback to download button
+                        shareContainer.innerHTML = `
+                            <p>${t('shareText')}</p>
+                            <div class="share-buttons">
+                                <a href="${imageUrl}" download="the-future-sh.png" class="share-button">${t('downloadButton')}</a>
+                                <a href="${twitterUrl}" target="_blank" class="share-button share-twitter">${t('shareButton')}</a>
+                                <a href="${facebookUrl}" target="_blank" class="share-button share-facebook">${t('shareFacebook')}</a>
+                                <a href="${linkedinUrl}" target="_blank" class="share-button share-linkedin">${t('shareLinkedin')}</a>
+                            </div>
+                            <img src="${imageUrl}" alt="A snapshot of the initiated future in the-future.sh">
+                        `;
+                    }
                     
                     headerContainer.appendChild(shareContainer);
                     shareContainer.style.display = 'block';
+                    
+                    // Add copy button event listener if supported
+                    if (supportsClipboard) {
+                        const copyButton = document.getElementById('copyButton');
+                        copyButton.addEventListener('click', async () => {
+                            const success = await copyImageToClipboard(canvas);
+                            showCopyFeedback(copyButton, success);
+                        });
+                    }
+                    
                     window.scrollTo(0, 0);
                 });
             }, 100);
@@ -1412,6 +1480,51 @@
         function showGuideHint() {
             addLine('');  // Empty line for separation
             addLine(`<span class="log-info">💡 ${t('newUserHint')}</span>`);
+        }
+        
+        // Copy image to clipboard function
+        async function copyImageToClipboard(canvas) {
+            try {
+                // Convert canvas to blob
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                
+                // Check if Clipboard API is available
+                if (!navigator.clipboard || !window.ClipboardItem) {
+                    throw new Error('Clipboard API not supported');
+                }
+                
+                // Write to clipboard
+                await navigator.clipboard.write([
+                    new ClipboardItem({
+                        'image/png': blob
+                    })
+                ]);
+                
+                return true;
+            } catch (err) {
+                console.error('Failed to copy image:', err);
+                return false;
+            }
+        }
+        
+        // Show copy feedback
+        function showCopyFeedback(button, success) {
+            const originalText = button.textContent;
+            const originalBg = button.style.backgroundColor;
+            
+            if (success) {
+                button.textContent = `✓ ${t('copySuccess')}`;
+                button.style.backgroundColor = '#28a745';
+            } else {
+                button.textContent = t('copyFailed');
+                button.style.backgroundColor = '#dc3545';
+            }
+            
+            // Reset after 2 seconds
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.style.backgroundColor = originalBg;
+            }, 2000);
         }
         
         // --- Utility Functions ---
