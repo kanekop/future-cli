@@ -19,6 +19,12 @@ The future isn't something you wait for; it's something you build, one commit at
 This project is a single, self-contained `index.html` file, but it's packed with features to create a compelling and shareable experience.
 
 - **Realistic Terminal Interface**: A CLI-like environment simulated entirely in your browser, featuring a blinking cursor, colored output, and a familiar prompt (`$`).
+
+- **Intro Animation (NEW)**: When you first visit the page, an automated demo plays showing someone attempting to boot their future incorrectly:
+    - Auto-types `./boot_future.sh` with realistic timing
+    - Shows the error message and usage instructions
+    - Teaches new users what they need to do
+    - Takes about 3 seconds total, creating anticipation
     
 - **The Boot Command**: The core of the experience. Users must provide two critical flags to boot their future:
     
@@ -47,7 +53,11 @@ This project is a single, self-contained `index.html` file, but it's packed with
         
 - **Shell Environment Commands**: Standard Unix commands for an authentic terminal experience:
     - `ls`: List files in the current directory
-    - `cat <file>`: Display file contents (try `cat README.md` or `cat vision.txt`)
+    - `cat <file>`: Display file contents with tab completion support:
+        - Type `cat ` and press Tab to see available files
+        - Type `cat R` and press Tab to auto-complete to `cat README.md`
+        - `cat boot_future.sh` shows "Permission denied" (the source is protected)
+        - Supports `README.md` and `vision.txt` for reading
     - `clear`: Clear the terminal screen
     - `pwd`: Print working directory (`/home/future/architect`)
     - `whoami`: Display current user (`builder`)
@@ -147,8 +157,9 @@ boot_future.sh --vision "sustainable cities everywhere" --commit "bike to work t
 
 # Basic shell commands
 ls          # See available files (boot_future.sh, README.md, vision.txt)
-cat README.md   # View this documentation
+cat README.md   # View this documentation (supports tab completion)
 cat vision.txt  # See a motivational message
+cat b[TAB]      # Auto-completes to boot_future.sh (but shows permission denied)
 pwd         # Show current directory (/home/future/architect)
 whoami      # Display current user (builder)
 help        # Get command help
@@ -176,6 +187,20 @@ The "error-first" design ensures that every successful boot feels meaningful. Th
 - **Deployment**: Hosted on [Vercel](https://vercel.com/ "null").
 
 ## Recently Implemented Features
+
+### ✅ Intro Animation (Complete)
+An automated demonstration plays when you first visit the page:
+- Shows someone attempting to run `./boot_future.sh` without parameters
+- Displays the error message to teach proper usage
+- Uses realistic typing animation with varied speeds
+- Creates anticipation and normalizes the "failure" experience
+
+### ✅ Enhanced Cat Command (Complete)
+The `cat` command now includes tab completion and special file handling:
+- Press Tab after `cat ` to see available files
+- Auto-completes partial filenames (e.g., `cat R[TAB]` → `cat README.md`)
+- `cat boot_future.sh` shows "Permission denied" to maintain the mystery
+- Full Unix-like tab completion behavior
 
 ### ✅ Interactive Mode (Phase 1 - Complete)
 The guided mode for CLI beginners is now live! Access it with `./boot_future.sh --interactive` to get step-by-step prompts for creating your vision and commitment.
