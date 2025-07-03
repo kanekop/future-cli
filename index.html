@@ -161,6 +161,27 @@
             50% { background-color: rgba(88, 166, 255, 0.1); }
             100% { background-color: transparent; }
         }
+        
+        .share-prompt {
+            margin-top: 1em;
+            margin-bottom: 1em;
+        }
+        
+        .share-option {
+            padding-left: 2em;
+            position: relative;
+            color: #c1c1c1;
+        }
+        
+        .share-option.selected {
+            color: var(--accent-color);
+        }
+        
+        .share-option.selected::before {
+            content: '>';
+            position: absolute;
+            left: 0.5em;
+        }
     </style>
 </head>
 <body>
@@ -177,10 +198,26 @@
         let currentInput = null;
         const commandHistory = [];
         let historyIndex = -1;
+        
+        // Share prompt state management
+        let sharePromptActive = false;
+        let sharePromptSelection = 1; // 1 for Yes, 2 for No
+        let lastBootedFuture = null; // Store last boot data
+        let shareTimeoutId = null; // Timeout reference
+        
+        // Interactive mode state
         let interactiveMode = false;
         let interactiveStep = null;
         let interactiveVision = '';
         let interactiveCommit = '';
+        
+        // Interactive confirm prompt state
+        let interactiveConfirmActive = false;
+        let interactiveConfirmSelection = 1; // 1 for Yes, 2 for No
+        
+        // Error tracking for guide hint
+        let consecutiveErrors = 0;
+        
         let currentLanguage = 'en'; // default to English
         
         // Language detection function
@@ -294,7 +331,15 @@
                 firstCheckpoint: 'First checkpoint',
                 milestone: 'Milestone',
                 drivenBy: 'Driven by',
-                deadline: 'Deadline'
+                deadline: 'Deadline',
+                sharePrompt: 'Would you like to share your future with others?',
+                shareYes: 'Yes',
+                shareNo: 'No',
+                shareDeclined: 'Understood. Your future is already running.\nKeep committing!',
+                shareTimeout: 'Auto-selected: No (timeout)',
+                shareLastNoData: 'No future to share. Boot your future first with ./future.sh',
+                shareLastPrompt: 'Share your last booted future?',
+                newUserHint: "New here? Type 'guide' for beginner-friendly mode!"
             },
             ja: {
                 fatal: '[致命的エラー] コアコンポーネントが不足しています。未来を起動できません。',
@@ -357,7 +402,15 @@
                 firstCheckpoint: '最初のチェックポイント',
                 milestone: 'マイルストーン',
                 drivenBy: '動機',
-                deadline: '期限'
+                deadline: '期限',
+                sharePrompt: 'あなたの未来を誰かと共有しますか？',
+                shareYes: 'はい',
+                shareNo: 'いいえ',
+                shareDeclined: '了解しました。あなたの未来はすでに動き始めています。\nコミットし続けてください！',
+                shareTimeout: '自動選択: いいえ（タイムアウト）',
+                shareLastNoData: '共有する未来がありません。まず ./future.sh で未来を起動してください。',
+                shareLastPrompt: '最後に起動した未来を共有しますか？',
+                newUserHint: "初めてですか？'guide'と入力すると初心者向けモードが始まります！"
             }
         };
         
@@ -372,9 +425,13 @@
         }
 
         // [NEW] Define the error message lines as a constant for reuse
-        function getErrorLines() {
+        function getErrorLines(showHint = false) {
+            const fatalMessage = showHint 
+                ? `<span class="log-fatal">${t('fatal')} 💡 ${t('newUserHint')}</span>`
+                : `<span class="log-fatal">${t('fatal')}</span>`;
+            
             return [
-                { text: `<span class="log-fatal">${t('fatal')}</span>`},
+                { text: fatalMessage },
                 { text: t('requiredFlags')},
                 { text: '' },
                 { text: t('usage')},
@@ -628,6 +685,8 @@
                 addLine(t('cmdWhoami'));
                 addLine(t('cmdHelpCmd'));
                 addLine('  lang [ja|en]                                              - Switch language');
+                addLine('  share-last                                                - Share your last booted future');
+                addLine(`  guide                                                     - ${currentLanguage === 'ja' ? '初心者向けガイドモードを開始' : 'Start beginner-friendly guided mode'}`);
                 createInputLine();
                 return;
             } else if (cmd === 'lang') {
@@ -642,6 +701,18 @@
                 }
                 createInputLine();
                 return;
+            } else if (cmd === 'share-last') {
+                handleShareLastCommand();
+                return;
+            } else if (cmd === 'guide' || cmd === 'ガイド') {
+                consecutiveErrors = 0; // Reset error counter
+                startInteractiveMode();
+                return;
+            }
+            
+            // Reset error counter for non-future.sh commands
+            if (cmd !== 'future' && cmd !== './future' && cmd !== 'future.sh' && cmd !== './future.sh') {
+                consecutiveErrors = 0;
             }
             
             // Check for future.sh commands
@@ -653,7 +724,6 @@
                 
                 // Handle --interactive flag
                 if (args === '--interactive') {
-                    lineElement.classList.add('shareable-log');
                     startInteractiveMode();
                     return;
                 }
@@ -689,6 +759,7 @@
                 const commitMatch = args.match(/--commit\s+["']([^"']+)["']/);
                 
                 if (visionMatch && commitMatch) {
+                    consecutiveErrors = 0; // Reset on successful command
                     lineElement.classList.add('shareable-log');
                     const vision = visionMatch[1];
                     const commit = commitMatch[1];
@@ -706,29 +777,20 @@
                         milestone: milestoneMatch ? milestoneMatch[1] : null
                     };
                     
-                    // Auto-detect language based on input
-                    const allText = vision + commit + (extendedOptions.when || '') + 
-                                   (extendedOptions.firstStep || '') + (extendedOptions.why || '') + 
-                                   (extendedOptions.milestone || '');
-                    if (containsJapanese(allText)) {
-                        currentLanguage = 'ja';
-                    } else {
-                        currentLanguage = 'en';
-                    }
                     
                     runSuccessSequence(vision, commit, false, extendedOptions);
                 } else if (args === '') {
                     // Handle bare ./boot_future.sh
-                    lineElement.classList.add('shareable-log');
+                    consecutiveErrors++;
                     runErrorSequence(() => {
                         setTimeout(createInputLine, 200);
-                    });
+                    }, consecutiveErrors >= 3);
                 } else {
                     // Invalid arguments
-                    lineElement.classList.add('shareable-log');
+                    consecutiveErrors++;
                     runErrorSequence(() => {
                         setTimeout(createInputLine, 200);
-                    });
+                    }, consecutiveErrors >= 3);
                 }
             } else {
                 // Command not found
@@ -807,46 +869,19 @@
                 addLine(`<span class="log-info">$</span> ./future.sh --vision "${escapeHtml(interactiveVision)}" --commit "${escapeHtml(interactiveCommit)}"`);
                 addLine('');
                 addLine(t('interactiveConfirm'));
-                addLine('');
                 
-                createInteractiveInput();
-            } else if (interactiveStep === 'confirm') {
-                if (value.toLowerCase() === 'yes' || value.toLowerCase() === 'y' || value === 'はい' || value === 'はい、お願いします') {
-                    interactiveMode = false;
-                    
-                    // Auto-detect language based on collected inputs
-                    if (containsJapanese(interactiveVision) || containsJapanese(interactiveCommit)) {
-                        currentLanguage = 'ja';
-                    } else {
-                        currentLanguage = 'en';
-                    }
-                    
-                    addLine('');
-                    addLine(t('executing'));
-                    addLine('');
-                    
-                    // Mark the command line as shareable
-                    const cmdLine = addLine(`$ ./future.sh --vision "${escapeHtml(interactiveVision)}" --commit "${escapeHtml(interactiveCommit)}"`);
-                    cmdLine.classList.add('shareable-log');
-                    
-                    runSuccessSequence(interactiveVision, interactiveCommit, true); // true indicates training mode
-                } else {
-                    interactiveMode = false;
-                    addLine('');
-                    addLine(t('interactiveCancelled'));
-                    createInputLine();
-                }
+                // Show the interactive confirm prompt instead of text input
+                showInteractiveConfirmPrompt();
             }
         }
         
         // [NEW] A dedicated function to display the error message sequence
-        function runErrorSequence(onComplete) {
+        function runErrorSequence(onComplete, showHint = false) {
             let delay = 0;
-            const errorLines = getErrorLines();
+            const errorLines = getErrorLines(showHint);
             errorLines.forEach((line, index) => {
                 setTimeout(() => {
                     const lineElement = addLine(line.text);
-                    lineElement.classList.add('shareable-log');
                     if (index === errorLines.length - 1 && onComplete) {
                         onComplete();
                     }
@@ -873,7 +908,6 @@
                     
                     // Show the final state immediately
                     const skipLine = addLine('$ ./future.sh');
-                    skipLine.classList.add('shareable-log');
                     commandHistory.push('./future.sh');
                     runErrorSequence(() => {
                         createInputLine();
@@ -922,7 +956,6 @@
                 typingCursor.remove();
                 introLine.innerHTML = `<span class="prompt">$</span> ${escapeHtml(command)}`;
                 introLine.classList.remove('intro-line');
-                introLine.classList.add('shareable-log');
                 introLine.classList.add('command-execute');
                 
                 // Add to command history
@@ -989,7 +1022,15 @@
                     lineElement.classList.add('shareable-log');
 
                     if (index === successLines.length - 1) {
-                        setTimeout(() => generateShareableImage(vision, commit, isTrainingMode, extendedOptions), 500);
+                        // Store the boot data for potential later sharing
+                        storeLastBootedFuture(vision, commit, isTrainingMode, extendedOptions);
+                        
+                        // Show generating message and then share prompt
+                        setTimeout(() => {
+                            const generatingLine = addLine(t('generating'));
+                            generatingLine.classList.add('shareable-log');
+                            setTimeout(() => showSharePrompt(), 500);
+                        }, 500);
                     }
                 }, delay);
                 delay += (line.text.length * 15) + 100;
@@ -998,9 +1039,8 @@
         
         // --- Shareable Image Generation ---
         function generateShareableImage(vision, commit, isTrainingMode = false, extendedOptions = {}) {
-            const generatingLine = addLine(t('generating'));
-            generatingLine.classList.add('shareable-log');
-
+            // Note: "Generating snapshot" message is now shown before the share prompt
+            
             setTimeout(() => {
                 const snapshotContainer = document.createElement('div');
                 snapshotContainer.style.position = 'absolute';
@@ -1078,6 +1118,264 @@
             }, 100);
         }
 
+        // --- Share Prompt Functions ---
+        function showSharePrompt() {
+            sharePromptActive = true;
+            sharePromptSelection = 1;
+            
+            // Add empty line
+            addLine('');
+            
+            // Add prompt question
+            const promptLine = addLine(t('sharePrompt'));
+            promptLine.classList.add('share-prompt');
+            
+            // Add options
+            const option1 = addLine(`  1. ${t('shareYes')}`);
+            option1.classList.add('share-option');
+            option1.id = 'share-option-1';
+            
+            const option2 = addLine(`  2. ${t('shareNo')}`);
+            option2.classList.add('share-option');
+            option2.id = 'share-option-2';
+            
+            // Update display to show initial selection
+            updateSharePromptDisplay();
+            
+            // Add keyboard event listener
+            document.addEventListener('keydown', handleSharePromptKeydown);
+            
+            // Set timeout for auto-selection
+            shareTimeoutId = setTimeout(() => {
+                if (sharePromptActive) {
+                    addLine('');
+                    addLine(`<span style="color: #7f8c8d;">${t('shareTimeout')}</span>`);
+                    executeShareChoice(2); // Auto-select "No"
+                }
+            }, 180000); // 3 minutes
+        }
+        
+        function handleSharePromptKeydown(e) {
+            if (!sharePromptActive) return;
+            
+            e.preventDefault();
+            
+            // Arrow keys
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                sharePromptSelection = sharePromptSelection === 1 ? 2 : 1;
+                updateSharePromptDisplay();
+                return;
+            }
+            
+            // Enter key
+            if (e.key === 'Enter') {
+                executeShareChoice(sharePromptSelection);
+                return;
+            }
+            
+            // Number keys
+            if (e.key === '1') {
+                sharePromptSelection = 1;
+                updateSharePromptDisplay();
+                setTimeout(() => executeShareChoice(1), 100);
+                return;
+            }
+            
+            if (e.key === '2') {
+                sharePromptSelection = 2;
+                updateSharePromptDisplay();
+                setTimeout(() => executeShareChoice(2), 100);
+                return;
+            }
+            
+            // Y/N shortcuts
+            if (e.key.toLowerCase() === 'y') {
+                sharePromptSelection = 1;
+                updateSharePromptDisplay();
+                setTimeout(() => executeShareChoice(1), 100);
+                return;
+            }
+            
+            if (e.key.toLowerCase() === 'n') {
+                sharePromptSelection = 2;
+                updateSharePromptDisplay();
+                setTimeout(() => executeShareChoice(2), 100);
+                return;
+            }
+        }
+        
+        function updateSharePromptDisplay() {
+            const option1 = document.getElementById('share-option-1');
+            const option2 = document.getElementById('share-option-2');
+            
+            if (option1 && option2) {
+                option1.classList.toggle('selected', sharePromptSelection === 1);
+                option2.classList.toggle('selected', sharePromptSelection === 2);
+            }
+        }
+        
+        function executeShareChoice(choice) {
+            // Clear timeout
+            if (shareTimeoutId) {
+                clearTimeout(shareTimeoutId);
+                shareTimeoutId = null;
+            }
+            
+            // Remove event listener
+            document.removeEventListener('keydown', handleSharePromptKeydown);
+            sharePromptActive = false;
+            
+            if (choice === 1) {
+                // User chose to share
+                // The generateShareableImage function will be called to show the share container
+                if (lastBootedFuture) {
+                    generateShareableImage(
+                        lastBootedFuture.vision,
+                        lastBootedFuture.commit,
+                        lastBootedFuture.isTrainingMode,
+                        lastBootedFuture.extendedOptions
+                    );
+                }
+            } else {
+                // User chose not to share
+                addLine('');
+                const declineMessage = t('shareDeclined');
+                declineMessage.split('\n').forEach(line => {
+                    addLine(line);
+                });
+                setTimeout(createInputLine, 500);
+            }
+        }
+        
+        function storeLastBootedFuture(vision, commit, isTrainingMode, extendedOptions) {
+            lastBootedFuture = {
+                vision,
+                commit,
+                isTrainingMode,
+                extendedOptions,
+                timestamp: new Date().toISOString()
+            };
+        }
+        
+        function handleShareLastCommand() {
+            if (!lastBootedFuture) {
+                addLine(t('shareLastNoData'));
+                createInputLine();
+                return;
+            }
+            
+            // Show the share prompt for the last booted future
+            addLine(t('shareLastPrompt'));
+            showSharePrompt();
+        }
+        
+        // --- Interactive Confirm Prompt Functions ---
+        function showInteractiveConfirmPrompt() {
+            interactiveConfirmActive = true;
+            interactiveConfirmSelection = 1;
+            
+            // Add options
+            const option1 = addLine(`  1. ${t('shareYes')}`);
+            option1.classList.add('share-option');
+            option1.id = 'interactive-confirm-option-1';
+            
+            const option2 = addLine(`  2. ${t('shareNo')}`);
+            option2.classList.add('share-option');
+            option2.id = 'interactive-confirm-option-2';
+            
+            // Update display to show initial selection
+            updateInteractiveConfirmDisplay();
+            
+            // Add keyboard event listener
+            document.addEventListener('keydown', handleInteractiveConfirmKeydown);
+        }
+        
+        function handleInteractiveConfirmKeydown(e) {
+            if (!interactiveConfirmActive) return;
+            
+            e.preventDefault();
+            
+            // Arrow keys
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                interactiveConfirmSelection = interactiveConfirmSelection === 1 ? 2 : 1;
+                updateInteractiveConfirmDisplay();
+                return;
+            }
+            
+            // Enter key
+            if (e.key === 'Enter') {
+                executeInteractiveConfirmChoice(interactiveConfirmSelection);
+                return;
+            }
+            
+            // Number keys
+            if (e.key === '1') {
+                interactiveConfirmSelection = 1;
+                updateInteractiveConfirmDisplay();
+                setTimeout(() => executeInteractiveConfirmChoice(1), 100);
+                return;
+            }
+            
+            if (e.key === '2') {
+                interactiveConfirmSelection = 2;
+                updateInteractiveConfirmDisplay();
+                setTimeout(() => executeInteractiveConfirmChoice(2), 100);
+                return;
+            }
+            
+            // Y/N shortcuts
+            if (e.key.toLowerCase() === 'y') {
+                interactiveConfirmSelection = 1;
+                updateInteractiveConfirmDisplay();
+                setTimeout(() => executeInteractiveConfirmChoice(1), 100);
+                return;
+            }
+            
+            if (e.key.toLowerCase() === 'n') {
+                interactiveConfirmSelection = 2;
+                updateInteractiveConfirmDisplay();
+                setTimeout(() => executeInteractiveConfirmChoice(2), 100);
+                return;
+            }
+        }
+        
+        function updateInteractiveConfirmDisplay() {
+            const option1 = document.getElementById('interactive-confirm-option-1');
+            const option2 = document.getElementById('interactive-confirm-option-2');
+            
+            if (option1 && option2) {
+                option1.classList.toggle('selected', interactiveConfirmSelection === 1);
+                option2.classList.toggle('selected', interactiveConfirmSelection === 2);
+            }
+        }
+        
+        function executeInteractiveConfirmChoice(choice) {
+            // Remove event listener
+            document.removeEventListener('keydown', handleInteractiveConfirmKeydown);
+            interactiveConfirmActive = false;
+            
+            if (choice === 1) {
+                // User chose Yes
+                interactiveMode = false;
+                
+                addLine('');
+                addLine(t('executing'));
+                addLine('');
+                
+                // Mark the command line as shareable
+                const cmdLine = addLine(`$ ./future.sh --vision "${escapeHtml(interactiveVision)}" --commit "${escapeHtml(interactiveCommit)}"`);
+                cmdLine.classList.add('shareable-log');
+                
+                runSuccessSequence(interactiveVision, interactiveCommit, true); // true indicates training mode
+            } else {
+                // User chose No
+                interactiveMode = false;
+                addLine('');
+                addLine(t('interactiveCancelled'));
+                createInputLine();
+            }
+        }
+        
         // --- Utility Functions ---
         function scrollToBottom() {
             terminal.scrollTop = terminal.scrollHeight;
