@@ -544,6 +544,11 @@
             const input = e.target;
             
             if (e.key === 'Enter') {
+                // Don't process normal commands if interactive confirm prompt is active
+                if (interactiveConfirmActive || sharePromptActive) {
+                    return;
+                }
+                
                 const command = input.value.trim();
                 if (command) {
                     commandHistory.push(command);
