@@ -36,6 +36,7 @@ This project is a single, self-contained `index.html` file, but it's packed with
 - **Interactive Mode (Training Mode)**: For those new to CLI, there's a guided mode that teaches the proper command structure:
     - Accessed via `./future.sh --interactive`
     - Walks users through the process step-by-step
+    - Uses interactive Yes/No prompts with arrow key navigation
     - Shows the correct command format at the end
     - Generated images include a "TRAINING MODE" watermark
     - Designed as a learning tool, not a replacement for the real experience
@@ -47,13 +48,13 @@ This project is a single, self-contained `index.html` file, but it's packed with
     - `--milestone`: Set an intermediate goal to track progress
     - When used, these options create a rich, tree-structured output showing your complete action plan
         
-- **Internationalization**: Automatic language detection for a seamless experience:
+- **Internationalization**: Full multilingual support with manual control:
     - Detects language at page load using multiple methods (URL parameter, saved preference, browser language)
     - Supports URL parameters: `?lang=ja` or `?lang=en` for direct language selection
     - Saves language preference in browser for future visits
-    - Detects Japanese characters in your input and switches the entire interface to Japanese
-    - All messages, errors, help text, and social sharing are fully localized
     - Manual language switching available with `lang [ja|en]` command
+    - All messages, errors, help text, and social sharing are fully localized
+    - Language setting persists throughout your session (no automatic switching based on input)
         
 - **Shell Environment Commands**: Standard Unix commands for an authentic terminal experience:
     - `ls`: List files in the current directory
@@ -67,6 +68,12 @@ This project is a single, self-contained `index.html` file, but it's packed with
     - `whoami`: Display current user (`builder`)
     - `help`: Show available commands
         
+- **Guide Command for Beginners**: A friendly hint system that helps lost users find their way:
+    - After 3 consecutive errors (invalid commands or failed attempts), a hint appears: "💡 New here? Type 'guide' for beginner-friendly mode!"
+    - Type `guide` (or `ガイド` in Japanese) to immediately start interactive mode
+    - The hint appears as a separate, highlighted line to catch attention
+    - Any successful command resets the error counter
+    
 - **Success & Failure States**:
     
     - If the command is run without the required flags, a `[FATAL]` error is displayed, along with a `USAGE` guide and a philosophical tip.
@@ -75,13 +82,22 @@ This project is a single, self-contained `index.html` file, but it's packed with
         
 - **Command History**: Just like a real terminal, you can navigate through your past commands using the `ArrowUp` and `ArrowDown` keys. The initial `./future.sh` command is pre-loaded into the history for convenience.
     
-- **Perfectly Cropped Snapshot**: After a successful boot, a shareable image (`.png`) is automatically generated. This snapshot is intelligently cropped to include the entire story of your session—from the initial "error" message to your successful command execution—with no wasted space.
+- **Perfectly Cropped Snapshot**: After a successful boot, a shareable image (`.png`) is automatically generated. The snapshot focuses only on your successful command and its output—no distracting error messages or failed attempts. This creates a clean, inspiring image perfect for sharing.
     
-- **Easy Sharing**: A share box appears at the top of the screen with two options:
+- **Interactive Share Prompt**: After successfully booting your future, you'll be asked "Would you like to share your future with others?"
+    - Use arrow keys, number keys (1/2), or Y/N to make your choice
+    - Selecting "Yes" reveals the share options
+    - Selecting "No" returns you to the terminal with an encouraging message
+    - 3-minute timeout automatically selects "No" if left idle
     
-    1. **Download Image**: Save the generated snapshot directly to your device.
-        
-    2. **Share on X**: Opens the X (Twitter) intent window with a pre-populated template, ready for you to share your commitment. The button order is intentionally designed to encourage downloading the image first.
+- **Easy Sharing**: When you choose to share, a share box appears with multiple options:
+    
+    1. **Download Image**: Save the generated snapshot directly to your device
+    2. **Share on X**: Opens X (Twitter) with a pre-populated message
+    3. **Share on Facebook**: Share your commitment on Facebook
+    4. **Share on LinkedIn**: Post your professional future on LinkedIn
+    
+- **Share-Last Command**: Missed the share prompt? Use `share-last` to share your most recently booted future anytime during your session
         
 
 ## How to Use
@@ -111,13 +127,19 @@ This project is a single, self-contained `index.html` file, but it's packed with
 
 For those unfamiliar with command-line interfaces:
 
-1. Type `./future.sh --interactive`
+1. Type `./future.sh --interactive` or simply `guide`
     
 2. Follow the guided prompts to enter your vision and commitment
     
 3. The system will show you the proper command format
     
-4. Confirm to execute and see your future boot
+4. Use the interactive Yes/No prompt to confirm:
+   - Arrow keys (↑/↓) to navigate
+   - Number keys (1/2) for quick selection
+   - Y/N shortcuts
+   - Enter to confirm your choice
+    
+5. Watch your future boot
     
 Note: Interactive mode is designed as a learning tool. Images generated in this mode will include a "TRAINING MODE" indicator. For the authentic experience and shareable images without watermarks, use the standard command format.
 
@@ -133,6 +155,8 @@ pwd         # Print working directory
 whoami      # Display current user
 help        # Show help message
 lang        # Switch language (ja/en)
+guide       # Start beginner-friendly guided mode
+share-last  # Share your last booted future
 ```
 
 These commands make the environment feel more authentic and help users familiarize themselves with basic shell operations.
@@ -153,7 +177,8 @@ future.sh --vision "green planet" --commit "plant trees"
   --first-step "install VS Code today" --milestone "build portfolio site" \
   --why "create impactful solutions" --when "2025-01-01"
 
-# Japanese input (interface auto-switches to Japanese)
+# Japanese input (use lang ja to switch interface)
+lang ja
 ./future.sh --vision "持続可能な社会" --commit "今日から自転車通勤"
 
 # Direct language selection via URL
@@ -176,6 +201,8 @@ help            # Get command help
 clear           # Clean up the terminal
 lang ja         # Switch to Japanese
 lang en         # Switch to English
+guide           # Start interactive mode (helpful for beginners)
+share-last      # Share your previously booted future
 ```
 
 ## The Design Philosophy
@@ -226,13 +253,13 @@ The `cat` command now includes tab completion and special file handling:
 The guided mode for CLI beginners is now live! Access it with `./future.sh --interactive` to get step-by-step prompts for creating your vision and commitment.
 
 ### ✅ Internationalization (Complete)
-Automatic language detection is now active:
+Full multilingual support with manual control:
 - Language detected at page load (URL parameter → saved preference → browser language)
 - Direct language selection via URL: `?lang=ja` or `?lang=en`
 - Manual switching with `lang [ja|en]` command
-- Type in Japanese, and the entire interface switches to Japanese automatically
-- All messages, errors, help text, and social sharing are fully localized
 - Language preference saved for future visits
+- All messages, errors, help text, and social sharing are fully localized
+- Language setting persists throughout your session (no auto-switching)
 
 ### ✅ Extended Options (Complete)
 The optional flags for deeper commitment are now available:
@@ -264,6 +291,27 @@ Future process started successfully. (PID: 20241225)
 └── Deadline: 2024-12-31
 Daemonizing... Your future is now running in the background. Keep committing.
 ```
+
+### ✅ Share Prompt System (Complete)
+An interactive sharing experience that respects user choice:
+- After booting your future, you're asked if you want to share
+- Interactive Yes/No selection with keyboard navigation
+- `share-last` command to share later if you change your mind
+- Clean, focused screenshots without error messages
+
+### ✅ Guide Command & Hint System (Complete)
+Helpful guidance for new users without being intrusive:
+- After 3 consecutive errors, a friendly hint appears
+- `guide` command (or `ガイド` in Japanese) starts interactive mode
+- Works with any type of error (invalid commands or missing flags)
+- Maintains the philosophy of "earning" the solution through effort
+
+### ✅ Enhanced Interactive Prompts (Complete)
+All confirmations now use the same intuitive interface:
+- Arrow keys for navigation
+- Number keys (1/2) for quick selection
+- Y/N keyboard shortcuts
+- Visual feedback with selection markers
 
 ## Future Development
 
