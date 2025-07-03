@@ -101,6 +101,7 @@
             margin-top: 15px;
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
         .share-button {
@@ -118,6 +119,17 @@
         }
         .share-button:hover {
             opacity: 0.8;
+        }
+        
+        /* Social media specific colors */
+        .share-twitter {
+            background-color: #1DA1F2;
+        }
+        .share-facebook {
+            background-color: #1877F2;
+        }
+        .share-linkedin {
+            background-color: #0A66C2;
         }
         
         /* Intro animation styles */
@@ -249,6 +261,8 @@
                 shareText: 'Your future has been initiated! Share this moment.',
                 downloadButton: 'Download Image',
                 shareButton: 'Share on X',
+                shareFacebook: 'Share on Facebook',
+                shareLinkedin: 'Share on LinkedIn',
                 commandNotFound: 'command not found',
                 helpUsage: 'Usage: ./future.sh --vision "<vision>" --commit "<action>"',
                 helpDescription: 'Boot your future by declaring your vision and committing to action.',
@@ -310,6 +324,8 @@
                 shareText: 'あなたの未来が始動しました！この瞬間を共有しましょう。',
                 downloadButton: '画像をダウンロード',
                 shareButton: 'Xで共有',
+                shareFacebook: 'Facebookで共有',
+                shareLinkedin: 'LinkedInで共有',
                 commandNotFound: 'コマンドが見つかりません',
                 helpUsage: '使用方法: ./future.sh --vision "<ビジョン>" --commit "<アクション>"',
                 helpDescription: 'ビジョンを宣言し、行動にコミットすることで未来を起動します。',
@@ -1030,13 +1046,27 @@
                     const shareText = currentLanguage === 'ja' 
                         ? `未来を起動しました！\n\nビジョン: ${vision}\nコミット: ${commit}\n\nあなたも未来を起動しよう: ${window.location.href}\n#BootYourFuture`
                         : `I've initiated my future!\n\nVision: ${vision}\nCommit: ${commit}\n\nBoot your own future at ${window.location.href}\n#BootYourFuture`;
+                    
+                    // Social media share URLs
                     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
+                    
+                    // Facebook share (URL only, Facebook will fetch Open Graph data)
+                    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}&quote=${encodeURIComponent(shareText)}`;
+                    
+                    // LinkedIn share
+                    const linkedinTitle = currentLanguage === 'ja' ? '未来を起動しました！' : "I've initiated my future!";
+                    const linkedinSummary = currentLanguage === 'ja' 
+                        ? `ビジョン: ${vision}\nコミット: ${commit}`
+                        : `Vision: ${vision}\nCommit: ${commit}`;
+                    const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}&title=${encodeURIComponent(linkedinTitle)}&summary=${encodeURIComponent(linkedinSummary)}`;
 
                     shareContainer.innerHTML = `
                         <p>${t('shareText')}</p>
                         <div class="share-buttons">
                             <a href="${imageUrl}" download="the-future-sh.png" class="share-button">${t('downloadButton')}</a>
-                            <a href="${twitterUrl}" target="_blank" class="share-button">${t('shareButton')}</a>
+                            <a href="${twitterUrl}" target="_blank" class="share-button share-twitter">${t('shareButton')}</a>
+                            <a href="${facebookUrl}" target="_blank" class="share-button share-facebook">${t('shareFacebook')}</a>
+                            <a href="${linkedinUrl}" target="_blank" class="share-button share-linkedin">${t('shareLinkedin')}</a>
                         </div>
                         <img src="${imageUrl}" alt="A snapshot of the initiated future in the-future.sh">
                     `;
