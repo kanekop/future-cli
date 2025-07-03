@@ -204,13 +204,13 @@
                     '',
                     'A tiny CLI simulator to boot your future.',
                     '',
-                    'Run ./boot_future.sh --vision "your vision" --commit "your action"'
+                    'Run ./future.sh --vision "your vision" --commit "your action"'
                 ]
             },
             'vision.txt': {
-                content: ['Your vision awaits. Use ./boot_future.sh to define it.']
+                content: ['Your vision awaits. Use ./future.sh to define it.']
             },
-            'boot_future.sh': {
+            'future.sh': {
                 content: null, // Special handling - cannot be displayed
                 protected: true
             }
@@ -225,7 +225,7 @@
                 fatal: '[FATAL] Core components missing. Future cannot be initialized.',
                 requiredFlags: '        Required flags: --vision, --commit',
                 usage: 'USAGE:',
-                usageExample: '  ./boot_future.sh --vision "a world where..." --commit "what you will do now"',
+                usageExample: '  ./future.sh --vision "a world where..." --commit "what you will do now"',
                 tip: '# Tip: A vision without a commit is just a dream.',
                 interactiveWelcome: '[INTERACTIVE MODE] Welcome to the guided future boot process!',
                 interactiveIntro: 'This mode will help you craft your vision and commitment step by step.',
@@ -250,7 +250,7 @@
                 downloadButton: 'Download Image',
                 shareButton: 'Share on X',
                 commandNotFound: 'command not found',
-                helpUsage: 'Usage: ./boot_future.sh --vision "<vision>" --commit "<action>"',
+                helpUsage: 'Usage: ./future.sh --vision "<vision>" --commit "<action>"',
                 helpDescription: 'Boot your future by declaring your vision and committing to action.',
                 helpOptions: 'Options:',
                 helpVision: '  --vision "<text>"     Your vision for the future (required)',
@@ -262,15 +262,15 @@
                 helpWhy: '  --why "<text>"        Personal motivation (optional)',
                 helpMilestone: '  --milestone "<text>"  Intermediate goal (optional)',
                 helpExamples: 'Examples:',
-                helpExample1: '  ./boot_future.sh --vision "a world of clean energy" --commit "install solar panels"',
-                helpExample2: '  ./boot_future.sh --interactive',
-                helpExample3: '  ./boot_future.sh --vision "become a developer" --commit "write code daily" \\',
+                helpExample1: '  ./future.sh --vision "a world of clean energy" --commit "install solar panels"',
+                helpExample2: '  ./future.sh --interactive',
+                helpExample3: '  ./future.sh --vision "become a developer" --commit "write code daily" \\',
                 helpExample4: '    --first-step "install VS Code" --milestone "build first app" \\',
                 helpExample5: '    --why "create solutions" --when "2025-01-01"',
                 availableCommands: 'Available commands:',
-                cmdBootFuture: '  ./boot_future.sh --vision "<vision>" --commit "<action>"  - Boot your future',
-                cmdInteractive: '  ./boot_future.sh --interactive                            - Guided mode',
-                cmdHelp: '  ./boot_future.sh --help                                   - Show help',
+                cmdBootFuture: '  ./future.sh --vision "<vision>" --commit "<action>"  - Boot your future',
+                cmdInteractive: '  ./future.sh --interactive                            - Guided mode',
+                cmdHelp: '  ./future.sh --help                                   - Show help',
                 cmdLs: '  ls                                                        - List files',
                 cmdCat: '  cat <file>                                                - Display file contents',
                 cmdClear: '  clear                                                     - Clear terminal',
@@ -286,7 +286,7 @@
                 fatal: '[致命的エラー] コアコンポーネントが不足しています。未来を起動できません。',
                 requiredFlags: '        必須フラグ: --vision, --commit',
                 usage: '使用方法:',
-                usageExample: '  ./boot_future.sh --vision "〜な世界" --commit "今すぐやること"',
+                usageExample: '  ./future.sh --vision "〜な世界" --commit "今すぐやること"',
                 tip: '# ヒント: 未来を語るにはビジョンが必要です。ビジョンを夢で終わらせないためにはコミットが必要です。',
                 interactiveWelcome: '[対話モード] 未来起動プロセスへようこそ！',
                 interactiveIntro: 'このモードでは、ビジョンとコミットメントを段階的に作成できます。',
@@ -311,7 +311,7 @@
                 downloadButton: '画像をダウンロード',
                 shareButton: 'Xで共有',
                 commandNotFound: 'コマンドが見つかりません',
-                helpUsage: '使用方法: ./boot_future.sh --vision "<ビジョン>" --commit "<アクション>"',
+                helpUsage: '使用方法: ./future.sh --vision "<ビジョン>" --commit "<アクション>"',
                 helpDescription: 'ビジョンを宣言し、行動にコミットすることで未来を起動します。',
                 helpOptions: 'オプション:',
                 helpVision: '  --vision "<テキスト>"  あなたの未来のビジョン（必須）',
@@ -323,15 +323,15 @@
                 helpWhy: '  --why "<テキスト>"    個人的な動機（オプション）',
                 helpMilestone: '  --milestone "<テキスト>" 中間目標（オプション）',
                 helpExamples: '例:',
-                helpExample1: '  ./boot_future.sh --vision "クリーンエネルギーの世界" --commit "ソーラーパネルを設置"',
-                helpExample2: '  ./boot_future.sh --interactive',
-                helpExample3: '  ./boot_future.sh --vision "エンジニアになる" --commit "毎日コードを書く" \\',
+                helpExample1: '  ./future.sh --vision "クリーンエネルギーの世界" --commit "ソーラーパネルを設置"',
+                helpExample2: '  ./future.sh --interactive',
+                helpExample3: '  ./future.sh --vision "エンジニアになる" --commit "毎日コードを書く" \\',
                 helpExample4: '    --first-step "VS Codeをインストール" --milestone "最初のアプリを作る" \\',
                 helpExample5: '    --why "ソリューションを作りたい" --when "2025-01-01"',
                 availableCommands: '使用可能なコマンド:',
-                cmdBootFuture: '  ./boot_future.sh --vision "<ビジョン>" --commit "<アクション>"  - 未来を起動',
-                cmdInteractive: '  ./boot_future.sh --interactive                            - ガイドモード',
-                cmdHelp: '  ./boot_future.sh --help                                   - ヘルプを表示',
+                cmdBootFuture: '  ./future.sh --vision "<ビジョン>" --commit "<アクション>"  - 未来を起動',
+                cmdInteractive: '  ./future.sh --interactive                            - ガイドモード',
+                cmdHelp: '  ./future.sh --help                                   - ヘルプを表示',
                 cmdLs: '  ls                                                        - ファイル一覧',
                 cmdCat: '  cat <ファイル>                                              - ファイル内容表示',
                 cmdClear: '  clear                                                     - 画面クリア',
@@ -433,7 +433,7 @@
             
             // Handle tab completion for commands
             if (parts.length === 1 && !currentValue.includes(' ')) {
-                const commands = ['cat', 'ls', 'clear', 'pwd', 'whoami', 'help', 'lang', './boot_future.sh', 'boot_future.sh'];
+                const commands = ['cat', 'ls', 'clear', 'pwd', 'whoami', 'help', 'lang', 'future', './future', 'future.sh', './future.sh'];
                 const partial = parts[0];
                 
                 const matches = commands.filter(cmd => 
@@ -628,12 +628,12 @@
                 return;
             }
             
-            // Check for boot_future.sh commands
-            const bootRegex = /^(?:\.\/)?(boot_future\.sh)(.*)$/;
-            const bootMatch = command.match(bootRegex);
+            // Check for future.sh commands
+            const futureRegex = /^(?:\.\/)?(?:future(?:\.sh)?)(.*)$/;
+            const futureMatch = command.match(futureRegex);
             
-            if (bootMatch) {
-                const args = bootMatch[2].trim();
+            if (futureMatch) {
+                const args = futureMatch[1].trim();
                 
                 // Handle --interactive flag
                 if (args === '--interactive') {
@@ -788,7 +788,7 @@
                 addLine('');
                 addLine(t('interactiveConfirmPrompt'));
                 addLine('');
-                addLine(`<span class="log-info">$</span> ./boot_future.sh --vision "${escapeHtml(interactiveVision)}" --commit "${escapeHtml(interactiveCommit)}"`);
+                addLine(`<span class="log-info">$</span> ./future.sh --vision "${escapeHtml(interactiveVision)}" --commit "${escapeHtml(interactiveCommit)}"`);
                 addLine('');
                 addLine(t('interactiveConfirm'));
                 addLine('');
@@ -810,7 +810,7 @@
                     addLine('');
                     
                     // Mark the command line as shareable
-                    const cmdLine = addLine(`$ ./boot_future.sh --vision "${escapeHtml(interactiveVision)}" --commit "${escapeHtml(interactiveCommit)}"`);
+                    const cmdLine = addLine(`$ ./future.sh --vision "${escapeHtml(interactiveVision)}" --commit "${escapeHtml(interactiveCommit)}"`);
                     cmdLine.classList.add('shareable-log');
                     
                     runSuccessSequence(interactiveVision, interactiveCommit, true); // true indicates training mode
@@ -856,9 +856,9 @@
                     terminal.style.pointerEvents = 'auto';
                     
                     // Show the final state immediately
-                    const skipLine = addLine('$ ./boot_future.sh');
+                    const skipLine = addLine('$ ./future.sh');
                     skipLine.classList.add('shareable-log');
-                    commandHistory.push('./boot_future.sh');
+                    commandHistory.push('./future.sh');
                     runErrorSequence(() => {
                         createInputLine();
                     });
@@ -876,7 +876,7 @@
             const typingCursor = introLine.querySelector('.typing-cursor');
             
             // Step 2: Auto-typing phase (500ms - 1900ms)
-            const command = './boot_future.sh';
+            const command = './future.sh';
             let charIndex = 0;
             
             function typeNextChar() {
