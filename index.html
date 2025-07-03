@@ -119,6 +119,36 @@
         .share-button:hover {
             opacity: 0.8;
         }
+        
+        /* Intro animation styles */
+        .typing-cursor {
+            display: inline-block;
+            width: 0.6em;
+            height: 1.2em;
+            background-color: var(--accent-color);
+            animation: cursor-blink 1s infinite;
+            vertical-align: text-bottom;
+            margin-left: 2px;
+        }
+        
+        @keyframes cursor-blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+        
+        .intro-line {
+            pointer-events: none;
+        }
+        
+        .command-execute {
+            animation: execute-flash 0.3s ease-out;
+        }
+        
+        @keyframes execute-flash {
+            0% { background-color: transparent; }
+            50% { background-color: rgba(88, 166, 255, 0.1); }
+            100% { background-color: transparent; }
+        }
     </style>
 </head>
 <body>
@@ -139,17 +169,168 @@
         let interactiveStep = null;
         let interactiveVision = '';
         let interactiveCommit = '';
+        let currentLanguage = 'en'; // default to English
+        
+        // i18n translations
+        const i18n = {
+            en: {
+                fatal: '[FATAL] Core components missing. Future cannot be initialized.',
+                requiredFlags: '        Required flags: --vision, --commit',
+                usage: 'USAGE:',
+                usageExample: '  ./boot_future.sh --vision "a world where..." --commit "what you will do now"',
+                tip: '# Tip: A vision without a commit is just a dream.',
+                interactiveWelcome: '[INTERACTIVE MODE] Welcome to the guided future boot process!',
+                interactiveIntro: 'This mode will help you craft your vision and commitment step by step.',
+                interactiveVisionPrompt: 'What is your vision for the future? (Type your answer and press Enter)',
+                interactiveVisionExample: '# Example: "a world where everyone has access to education"',
+                visionRecorded: 'Vision recorded',
+                interactiveCommitPrompt: 'Now, what is the first concrete action you will take to make this vision real?',
+                interactiveCommitExample: '# Example: "sign up for an online course today"',
+                commitRecorded: 'First commit recorded',
+                interactiveConfirmPrompt: 'Here\'s the command that will boot your future:',
+                interactiveConfirm: 'Ready to execute? Type "yes" to proceed or "no" to cancel.',
+                interactiveCancelled: 'Interactive mode cancelled. You can try again anytime.',
+                executing: 'Executing command...',
+                initializing: 'Initializing future with new parameters...',
+                visionLocked: 'Vision locked',
+                commitRegistered: 'First commit registered',
+                bootComplete: 'Boot sequence complete.',
+                processStarted: 'Future process started successfully.',
+                daemonizing: 'Daemonizing... Your future is now running in the background. Keep committing.',
+                generating: 'Generating a shareable snapshot...',
+                shareText: 'Your future has been initiated! Share this moment.',
+                downloadButton: 'Download Image',
+                shareButton: 'Share on X',
+                commandNotFound: 'command not found',
+                helpUsage: 'Usage: ./boot_future.sh --vision "<vision>" --commit "<action>"',
+                helpDescription: 'Boot your future by declaring your vision and committing to action.',
+                helpOptions: 'Options:',
+                helpVision: '  --vision "<text>"     Your vision for the future (required)',
+                helpCommit: '  --commit "<text>"     Your first concrete action (required)',
+                helpInteractive: '  --interactive         Start guided mode for beginners',
+                helpHelp: '  --help                Show this help message',
+                helpWhen: '  --when "<date>"       Deadline for starting (optional)',
+                helpFirstStep: '  --first-step "<text>" The very first micro-action (optional)',
+                helpWhy: '  --why "<text>"        Personal motivation (optional)',
+                helpMilestone: '  --milestone "<text>"  Intermediate goal (optional)',
+                helpExamples: 'Examples:',
+                helpExample1: '  ./boot_future.sh --vision "a world of clean energy" --commit "install solar panels"',
+                helpExample2: '  ./boot_future.sh --interactive',
+                helpExample3: '  ./boot_future.sh --vision "become a developer" --commit "write code daily" \\',
+                helpExample4: '    --first-step "install VS Code" --milestone "build first app" \\',
+                helpExample5: '    --why "create solutions" --when "2025-01-01"',
+                availableCommands: 'Available commands:',
+                cmdBootFuture: '  ./boot_future.sh --vision "<vision>" --commit "<action>"  - Boot your future',
+                cmdInteractive: '  ./boot_future.sh --interactive                            - Guided mode',
+                cmdHelp: '  ./boot_future.sh --help                                   - Show help',
+                cmdLs: '  ls                                                        - List files',
+                cmdCat: '  cat <file>                                                - Display file contents',
+                cmdClear: '  clear                                                     - Clear terminal',
+                cmdPwd: '  pwd                                                       - Print working directory',
+                cmdWhoami: '  whoami                                                    - Display current user',
+                cmdHelpCmd: '  help                                                      - Show this help message',
+                catReadmeTitle: '# the-future.sh',
+                catReadmeDesc: '> A tiny CLI simulator to boot your future.',
+                catReadmeMore: 'Visit https://github.com/yourusername/the-future.sh for full documentation.',
+                catVision: 'Your vision awaits. Use ./boot_future.sh to define it.',
+                catNotFound: 'No such file or directory',
+                catMissing: 'missing file operand',
+                firstCheckpoint: 'First checkpoint',
+                milestone: 'Milestone',
+                drivenBy: 'Driven by',
+                deadline: 'Deadline'
+            },
+            ja: {
+                fatal: '[致命的エラー] コアコンポーネントが不足しています。未来を初期化できません。',
+                requiredFlags: '        必須フラグ: --vision, --commit',
+                usage: '使用方法:',
+                usageExample: '  ./boot_future.sh --vision "〜な世界" --commit "今すぐやること"',
+                tip: '# ヒント: コミットなきビジョンは、ただの願望です。',
+                interactiveWelcome: '[対話モード] 未来起動プロセスへようこそ！',
+                interactiveIntro: 'このモードでは、ビジョンとコミットメントを段階的に作成できます。',
+                interactiveVisionPrompt: 'あなたの未来のビジョンは何ですか？（入力してEnterを押してください）',
+                interactiveVisionExample: '# 例: "誰もが教育を受けられる世界"',
+                visionRecorded: 'ビジョンを記録しました',
+                interactiveCommitPrompt: 'このビジョンを実現するために、今すぐ取る最初の具体的な行動は何ですか？',
+                interactiveCommitExample: '# 例: "今日オンラインコースに登録する"',
+                commitRecorded: '最初のコミットを記録しました',
+                interactiveConfirmPrompt: 'あなたの未来を起動するコマンドは以下の通りです：',
+                interactiveConfirm: '実行する準備はできましたか？「yes」で続行、「no」でキャンセルします。',
+                interactiveCancelled: '対話モードをキャンセルしました。いつでも再試行できます。',
+                executing: 'コマンドを実行中...',
+                initializing: '新しいパラメータで未来を初期化中...',
+                visionLocked: 'ビジョンをロックしました',
+                commitRegistered: '最初のコミットを登録しました',
+                bootComplete: 'ブートシーケンス完了。',
+                processStarted: '未来プロセスが正常に開始されました。',
+                daemonizing: 'デーモン化中... あなたの未来はバックグラウンドで実行されています。コミットし続けてください。',
+                generating: '共有可能なスナップショットを生成中...',
+                shareText: 'あなたの未来が始動しました！この瞬間を共有しましょう。',
+                downloadButton: '画像をダウンロード',
+                shareButton: 'Xで共有',
+                commandNotFound: 'コマンドが見つかりません',
+                helpUsage: '使用方法: ./boot_future.sh --vision "<ビジョン>" --commit "<アクション>"',
+                helpDescription: 'ビジョンを宣言し、行動にコミットすることで未来を起動します。',
+                helpOptions: 'オプション:',
+                helpVision: '  --vision "<テキスト>"  あなたの未来のビジョン（必須）',
+                helpCommit: '  --commit "<テキスト>"  最初の具体的な行動（必須）',
+                helpInteractive: '  --interactive         初心者向けガイドモード',
+                helpHelp: '  --help                このヘルプメッセージを表示',
+                helpWhen: '  --when "<日付>"       開始期限（オプション）',
+                helpFirstStep: '  --first-step "<テキスト>" 最初の小さな行動（オプション）',
+                helpWhy: '  --why "<テキスト>"    個人的な動機（オプション）',
+                helpMilestone: '  --milestone "<テキスト>" 中間目標（オプション）',
+                helpExamples: '例:',
+                helpExample1: '  ./boot_future.sh --vision "クリーンエネルギーの世界" --commit "ソーラーパネルを設置"',
+                helpExample2: '  ./boot_future.sh --interactive',
+                helpExample3: '  ./boot_future.sh --vision "エンジニアになる" --commit "毎日コードを書く" \\',
+                helpExample4: '    --first-step "VS Codeをインストール" --milestone "最初のアプリを作る" \\',
+                helpExample5: '    --why "ソリューションを作りたい" --when "2025-01-01"',
+                availableCommands: '使用可能なコマンド:',
+                cmdBootFuture: '  ./boot_future.sh --vision "<ビジョン>" --commit "<アクション>"  - 未来を起動',
+                cmdInteractive: '  ./boot_future.sh --interactive                            - ガイドモード',
+                cmdHelp: '  ./boot_future.sh --help                                   - ヘルプを表示',
+                cmdLs: '  ls                                                        - ファイル一覧',
+                cmdCat: '  cat <ファイル>                                              - ファイル内容表示',
+                cmdClear: '  clear                                                     - 画面クリア',
+                cmdPwd: '  pwd                                                       - 現在のディレクトリ',
+                cmdWhoami: '  whoami                                                    - 現在のユーザー',
+                cmdHelpCmd: '  help                                                      - このヘルプを表示',
+                catReadmeTitle: '# the-future.sh',
+                catReadmeDesc: '> 未来を起動する小さなCLIシミュレーター',
+                catReadmeMore: '詳細は https://github.com/yourusername/the-future.sh をご覧ください。',
+                catVision: 'あなたのビジョンが待っています。./boot_future.sh を使って定義してください。',
+                catNotFound: 'そのようなファイルまたはディレクトリはありません',
+                catMissing: 'ファイルオペランドがありません',
+                firstCheckpoint: '最初のチェックポイント',
+                milestone: 'マイルストーン',
+                drivenBy: '動機',
+                deadline: '期限'
+            }
+        };
+        
+        // Detect if text contains Japanese characters
+        function containsJapanese(text) {
+            return /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(text);
+        }
+        
+        // Get translation
+        function t(key) {
+            return i18n[currentLanguage][key] || i18n.en[key];
+        }
 
         // [NEW] Define the error message lines as a constant for reuse
-        const errorLines = [
-            { text: '<span class="log-fatal">[FATAL]</span> Core components missing. Future cannot be initialized.'},
-            { text: '        Required flags: --vision, --commit'},
-            { text: '' },
-            { text: 'USAGE:'},
-            { text: '  ./boot_future.sh --vision "a world where..." --commit "what you will do now"'},
-            { text: '' },
-            { text: '<span class="log-tip"># Tip: A vision without a commit is just a dream.</span>'}
-        ];
+        function getErrorLines() {
+            return [
+                { text: `<span class="log-fatal">${t('fatal')}</span>`},
+                { text: t('requiredFlags')},
+                { text: '' },
+                { text: t('usage')},
+                { text: t('usageExample')},
+                { text: '' },
+                { text: `<span class="log-tip">${t('tip')}</span>`}
+            ];
+        }
 
         // --- Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -227,16 +408,16 @@
                 return;
             } else if (cmd === 'cat') {
                 if (parts[1] === 'README.md') {
-                    addLine('# the-future.sh');
-                    addLine('> A tiny CLI simulator to boot your future.');
+                    addLine(t('catReadmeTitle'));
+                    addLine(t('catReadmeDesc'));
                     addLine('');
-                    addLine('Visit https://github.com/yourusername/the-future.sh for full documentation.');
+                    addLine(t('catReadmeMore'));
                 } else if (parts[1] === 'vision.txt') {
-                    addLine('Your vision awaits. Use ./boot_future.sh to define it.');
+                    addLine(t('catVision'));
                 } else if (parts[1]) {
-                    addLine(`cat: ${parts[1]}: No such file or directory`);
+                    addLine(`cat: ${parts[1]}: ${t('catNotFound')}`);
                 } else {
-                    addLine('cat: missing file operand');
+                    addLine(`cat: ${t('catMissing')}`);
                 }
                 createInputLine();
                 return;
@@ -253,16 +434,16 @@
                 createInputLine();
                 return;
             } else if (cmd === 'help') {
-                addLine('Available commands:');
-                addLine('  ./boot_future.sh --vision "<vision>" --commit "<action>"  - Boot your future');
-                addLine('  ./boot_future.sh --interactive                            - Guided mode');
-                addLine('  ./boot_future.sh --help                                   - Show help');
-                addLine('  ls                                                        - List files');
-                addLine('  cat <file>                                                - Display file contents');
-                addLine('  clear                                                     - Clear terminal');
-                addLine('  pwd                                                       - Print working directory');
-                addLine('  whoami                                                    - Display current user');
-                addLine('  help                                                      - Show this help message');
+                addLine(t('availableCommands'));
+                addLine(t('cmdBootFuture'));
+                addLine(t('cmdInteractive'));
+                addLine(t('cmdHelp'));
+                addLine(t('cmdLs'));
+                addLine(t('cmdCat'));
+                addLine(t('cmdClear'));
+                addLine(t('cmdPwd'));
+                addLine(t('cmdWhoami'));
+                addLine(t('cmdHelpCmd'));
                 createInputLine();
                 return;
             }
@@ -283,32 +464,63 @@
                 
                 // Handle --help flag
                 if (args === '--help') {
-                    addLine('Usage: ./boot_future.sh --vision "<vision>" --commit "<action>"');
+                    addLine(t('helpUsage'));
                     addLine('');
-                    addLine('Boot your future by declaring your vision and committing to action.');
+                    addLine(t('helpDescription'));
                     addLine('');
-                    addLine('Options:');
-                    addLine('  --vision "<text>"     Your vision for the future (required)');
-                    addLine('  --commit "<text>"     Your first concrete action (required)');
-                    addLine('  --interactive         Start guided mode for beginners');
-                    addLine('  --help                Show this help message');
+                    addLine(t('helpOptions'));
+                    addLine(t('helpVision'));
+                    addLine(t('helpCommit'));
+                    addLine(t('helpWhen'));
+                    addLine(t('helpFirstStep'));
+                    addLine(t('helpWhy'));
+                    addLine(t('helpMilestone'));
+                    addLine(t('helpInteractive'));
+                    addLine(t('helpHelp'));
                     addLine('');
-                    addLine('Examples:');
-                    addLine('  ./boot_future.sh --vision "a world of clean energy" --commit "install solar panels"');
-                    addLine('  ./boot_future.sh --interactive');
+                    addLine(t('helpExamples'));
+                    addLine(t('helpExample1'));
+                    addLine(t('helpExample2'));
+                    addLine(t('helpExample3'));
+                    addLine(t('helpExample4'));
+                    addLine(t('helpExample5'));
                     createInputLine();
                     return;
                 }
                 
-                // Check for vision and commit flags
-                const visionCommitRegex = /--vision\s+["']([^"']+)["']\s+--commit\s+["']([^"']+)["']/;
-                const match = args.match(visionCommitRegex);
+                // Check for vision and commit flags (required)
+                const visionMatch = args.match(/--vision\s+["']([^"']+)["']/);
+                const commitMatch = args.match(/--commit\s+["']([^"']+)["']/);
                 
-                if (match) {
+                if (visionMatch && commitMatch) {
                     lineElement.classList.add('shareable-log');
-                    const vision = match[1];
-                    const commit = match[2];
-                    runSuccessSequence(vision, commit);
+                    const vision = visionMatch[1];
+                    const commit = commitMatch[1];
+                    
+                    // Check for optional extended flags
+                    const whenMatch = args.match(/--when\s+["']([^"']+)["']/);
+                    const firstStepMatch = args.match(/--first-step\s+["']([^"']+)["']/);
+                    const whyMatch = args.match(/--why\s+["']([^"']+)["']/);
+                    const milestoneMatch = args.match(/--milestone\s+["']([^"']+)["']/);
+                    
+                    const extendedOptions = {
+                        when: whenMatch ? whenMatch[1] : null,
+                        firstStep: firstStepMatch ? firstStepMatch[1] : null,
+                        why: whyMatch ? whyMatch[1] : null,
+                        milestone: milestoneMatch ? milestoneMatch[1] : null
+                    };
+                    
+                    // Auto-detect language based on input
+                    const allText = vision + commit + (extendedOptions.when || '') + 
+                                   (extendedOptions.firstStep || '') + (extendedOptions.why || '') + 
+                                   (extendedOptions.milestone || '');
+                    if (containsJapanese(allText)) {
+                        currentLanguage = 'ja';
+                    } else {
+                        currentLanguage = 'en';
+                    }
+                    
+                    runSuccessSequence(vision, commit, false, extendedOptions);
                 } else if (args === '') {
                     // Handle bare ./boot_future.sh
                     lineElement.classList.add('shareable-log');
@@ -325,7 +537,7 @@
             } else {
                 // Command not found
                 if (command) {
-                    addLine(`zsh: command not found: ${escapeHtml(command.split(' ')[0])}`);
+                    addLine(`zsh: ${t('commandNotFound')}: ${escapeHtml(command.split(' ')[0])}`);
                 }
                 createInputLine();
             }
@@ -338,13 +550,12 @@
             interactiveStep = 'intro';
             
             addLine('');
-            addLine('<span class="log-info">[INTERACTIVE MODE]</span> Welcome to the guided future boot process!');
+            addLine(`<span class="log-info">${t('interactiveWelcome')}</span>`);
             addLine('');
-            addLine('This mode will help you craft your vision and commitment step by step.');
-            addLine('Let\'s start by understanding what you want to create.');
+            addLine(t('interactiveIntro'));
             addLine('');
-            addLine('What is your vision for the future? (Type your answer and press Enter)');
-            addLine('<span class="log-tip"># Example: "a world where everyone has access to education"</span>');
+            addLine(t('interactiveVisionPrompt'));
+            addLine(`<span class="log-tip">${t('interactiveVisionExample')}</span>`);
             addLine('');
             
             createInteractiveInput();
@@ -381,10 +592,10 @@
                 interactiveStep = 'commit';
                 
                 addLine('');
-                addLine(`<span class="log-ok">[ OK ]</span> Vision recorded: "${escapeHtml(value)}"`);
+                addLine(`<span class="log-ok">[ OK ]</span> ${t('visionRecorded')}: "${escapeHtml(value)}"`);
                 addLine('');
-                addLine('Now, what is the first concrete action you will take to make this vision real?');
-                addLine('<span class="log-tip"># Example: "sign up for an online course today"</span>');
+                addLine(t('interactiveCommitPrompt'));
+                addLine(`<span class="log-tip">${t('interactiveCommitExample')}</span>`);
                 addLine('');
                 
                 createInteractiveInput();
@@ -393,21 +604,29 @@
                 interactiveStep = 'confirm';
                 
                 addLine('');
-                addLine(`<span class="log-ok">[ OK ]</span> First commit recorded: "${escapeHtml(value)}"`);
+                addLine(`<span class="log-ok">[ OK ]</span> ${t('commitRecorded')}: "${escapeHtml(value)}"`);
                 addLine('');
-                addLine('Here\'s the command that will boot your future:');
+                addLine(t('interactiveConfirmPrompt'));
                 addLine('');
                 addLine(`<span class="log-info">$</span> ./boot_future.sh --vision "${escapeHtml(interactiveVision)}" --commit "${escapeHtml(interactiveCommit)}"`);
                 addLine('');
-                addLine('Ready to execute? Type "yes" to proceed or "no" to cancel.');
+                addLine(t('interactiveConfirm'));
                 addLine('');
                 
                 createInteractiveInput();
             } else if (interactiveStep === 'confirm') {
-                if (value.toLowerCase() === 'yes' || value.toLowerCase() === 'y') {
+                if (value.toLowerCase() === 'yes' || value.toLowerCase() === 'y' || value === 'はい' || value === 'はい、お願いします') {
                     interactiveMode = false;
+                    
+                    // Auto-detect language based on collected inputs
+                    if (containsJapanese(interactiveVision) || containsJapanese(interactiveCommit)) {
+                        currentLanguage = 'ja';
+                    } else {
+                        currentLanguage = 'en';
+                    }
+                    
                     addLine('');
-                    addLine('Executing command...');
+                    addLine(t('executing'));
                     addLine('');
                     
                     // Mark the command line as shareable
@@ -418,7 +637,7 @@
                 } else {
                     interactiveMode = false;
                     addLine('');
-                    addLine('Interactive mode cancelled. You can try again anytime.');
+                    addLine(t('interactiveCancelled'));
                     createInputLine();
                 }
             }
@@ -427,6 +646,7 @@
         // [NEW] A dedicated function to display the error message sequence
         function runErrorSequence(onComplete) {
             let delay = 0;
+            const errorLines = getErrorLines();
             errorLines.forEach((line, index) => {
                 setTimeout(() => {
                     const lineElement = addLine(line.text);
@@ -440,28 +660,131 @@
         }
 
         function runIntroAnimation() {
-            commandHistory.push('./boot_future.sh');
+            // Disable user interaction during animation
+            terminal.style.pointerEvents = 'none';
             
-            const firstLine = addLine('$ ./boot_future.sh');
-            firstLine.classList.add('shareable-log');
-
-            setTimeout(() => {
-                runErrorSequence(() => {
-                    setTimeout(createInputLine, 200);
-                });
-            }, 500);
+            let animationActive = true;
+            let timeouts = [];
+            
+            // Allow ESC key to skip animation
+            function handleEscKey(e) {
+                if (e.key === 'Escape' && animationActive) {
+                    animationActive = false;
+                    timeouts.forEach(timeout => clearTimeout(timeout));
+                    document.removeEventListener('keydown', handleEscKey);
+                    terminal.innerHTML = '';
+                    terminal.style.pointerEvents = 'auto';
+                    
+                    // Show the final state immediately
+                    const skipLine = addLine('$ ./boot_future.sh');
+                    skipLine.classList.add('shareable-log');
+                    commandHistory.push('./boot_future.sh');
+                    runErrorSequence(() => {
+                        createInputLine();
+                    });
+                }
+            }
+            document.addEventListener('keydown', handleEscKey);
+            
+            // Step 1: Show initial prompt with cursor (0ms)
+            const introLine = document.createElement('div');
+            introLine.className = 'line intro-line';
+            introLine.innerHTML = '<span class="prompt">$</span> <span class="typing-text"></span><span class="typing-cursor"></span>';
+            terminal.appendChild(introLine);
+            
+            const typingText = introLine.querySelector('.typing-text');
+            const typingCursor = introLine.querySelector('.typing-cursor');
+            
+            // Step 2: Auto-typing phase (500ms - 1900ms)
+            const command = './boot_future.sh';
+            let charIndex = 0;
+            
+            function typeNextChar() {
+                if (!animationActive) return;
+                
+                if (charIndex < command.length) {
+                    typingText.textContent += command[charIndex];
+                    charIndex++;
+                    
+                    // Vary typing speed: slower for "./boot_", faster for "future.sh"
+                    const delay = charIndex <= 7 ? 50 : 30;
+                    timeouts.push(setTimeout(typeNextChar, delay));
+                } else {
+                    // Step 2.5: Cursor blinks to show hesitation (1400ms - 1900ms)
+                    timeouts.push(setTimeout(simulateEnterPress, 500));
+                }
+            }
+            
+            // Start typing after initial delay
+            timeouts.push(setTimeout(typeNextChar, 500));
+            
+            function simulateEnterPress() {
+                if (!animationActive) return;
+                
+                // Step 3: Enter key animation (1900ms - 2000ms)
+                // Remove cursor and convert to executed command
+                typingCursor.remove();
+                introLine.innerHTML = `<span class="prompt">$</span> ${escapeHtml(command)}`;
+                introLine.classList.remove('intro-line');
+                introLine.classList.add('shareable-log');
+                introLine.classList.add('command-execute');
+                
+                // Add to command history
+                commandHistory.push(command);
+                
+                // Step 4: Error sequence display (2000ms - 3000ms)
+                timeouts.push(setTimeout(() => {
+                    if (!animationActive) return;
+                    
+                    runErrorSequence(() => {
+                        // Step 5: Ready state (3000ms+)
+                        animationActive = false;
+                        document.removeEventListener('keydown', handleEscKey);
+                        terminal.style.pointerEvents = 'auto';
+                        createInputLine();
+                    });
+                }, 100));
+            }
         }
 
-        function runSuccessSequence(vision, commit, isTrainingMode = false) {
+        function runSuccessSequence(vision, commit, isTrainingMode = false, extendedOptions = {}) {
             const successLines = [
-                { text: 'Initializing future with new parameters...' },
-                { text: `<span class="log-info">[INFO]</span> Vision locked: "${escapeHtml(vision)}"` },
-                { text: `<span class="log-info">[INFO]</span> First commit registered: "${escapeHtml(commit)}"` },
-                { text: `<span class="log-ok">[ OK ]</span> Boot sequence complete.` },
-                { text: `` },
-                { text: `Future process started successfully. (PID: ${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}${(new Date().getDate()).toString().padStart(2, '0')})`},
-                { text: `Daemonizing... Your future is now running in the background. Keep committing.` }
+                { text: t('initializing') },
+                { text: `<span class="log-info">[INFO]</span> ${t('visionLocked')}: "${escapeHtml(vision)}"` },
+                { text: `<span class="log-info">[INFO]</span> ${t('commitRegistered')}: "${escapeHtml(commit)}"` },
+                { text: `<span class="log-ok">[ OK ]</span> ${t('bootComplete')}` },
+                { text: `` }
             ];
+            
+            // Generate PID and base message
+            const pid = `${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}${(new Date().getDate()).toString().padStart(2, '0')}`;
+            
+            // Check if we have extended options
+            const hasExtendedOptions = extendedOptions.when || extendedOptions.firstStep || 
+                                     extendedOptions.why || extendedOptions.milestone;
+            
+            if (hasExtendedOptions) {
+                // Rich output format with tree structure
+                successLines.push({ text: `${t('processStarted')} (PID: ${pid})` });
+                
+                if (extendedOptions.firstStep) {
+                    successLines.push({ text: `├── ${t('firstCheckpoint')}: ${escapeHtml(extendedOptions.firstStep)}` });
+                }
+                if (extendedOptions.milestone) {
+                    successLines.push({ text: `├── ${t('milestone')}: ${escapeHtml(extendedOptions.milestone)}` });
+                }
+                if (extendedOptions.why) {
+                    successLines.push({ text: `├── ${t('drivenBy')}: ${escapeHtml(extendedOptions.why)}` });
+                }
+                if (extendedOptions.when) {
+                    successLines.push({ text: `└── ${t('deadline')}: ${escapeHtml(extendedOptions.when)}` });
+                }
+            } else {
+                // Simple output format
+                successLines.push({ text: `${t('processStarted')} (PID: ${pid})` });
+            }
+            
+            successLines.push({ text: t('daemonizing') });
 
             let delay = 0;
             successLines.forEach((line, index) => {
@@ -470,7 +793,7 @@
                     lineElement.classList.add('shareable-log');
 
                     if (index === successLines.length - 1) {
-                        setTimeout(() => generateShareableImage(vision, commit, isTrainingMode), 500);
+                        setTimeout(() => generateShareableImage(vision, commit, isTrainingMode, extendedOptions), 500);
                     }
                 }, delay);
                 delay += (line.text.length * 15) + 100;
@@ -478,8 +801,8 @@
         }
         
         // --- Shareable Image Generation ---
-        function generateShareableImage(vision, commit, isTrainingMode = false) {
-            const generatingLine = addLine('Generating a shareable snapshot...');
+        function generateShareableImage(vision, commit, isTrainingMode = false, extendedOptions = {}) {
+            const generatingLine = addLine(t('generating'));
             generatingLine.classList.add('shareable-log');
 
             setTimeout(() => {
@@ -524,14 +847,16 @@
                     const shareContainer = document.createElement('div');
                     shareContainer.id = 'share-container';
                     
-                    const shareText = `I've initiated my future!\n\nVision: ${vision}\nCommit: ${commit}\n\nBoot your own future at ${window.location.href}\n#BootYourFuture`;
+                    const shareText = currentLanguage === 'ja' 
+                        ? `未来を起動しました！\n\nビジョン: ${vision}\nコミット: ${commit}\n\nあなたも未来を起動しよう: ${window.location.href}\n#BootYourFuture`
+                        : `I've initiated my future!\n\nVision: ${vision}\nCommit: ${commit}\n\nBoot your own future at ${window.location.href}\n#BootYourFuture`;
                     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
 
                     shareContainer.innerHTML = `
-                        <p>Your future has been initiated! Share this moment.</p>
+                        <p>${t('shareText')}</p>
                         <div class="share-buttons">
-                            <a href="${imageUrl}" download="the-future-sh.png" class="share-button">Download Image</a>
-                            <a href="${twitterUrl}" target="_blank" class="share-button">Share on X</a>
+                            <a href="${imageUrl}" download="the-future-sh.png" class="share-button">${t('downloadButton')}</a>
+                            <a href="${twitterUrl}" target="_blank" class="share-button">${t('shareButton')}</a>
                         </div>
                         <img src="${imageUrl}" alt="A snapshot of the initiated future in the-future.sh">
                     `;

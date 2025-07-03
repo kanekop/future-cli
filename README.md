@@ -33,6 +33,26 @@ This project is a single, self-contained `index.html` file, but it's packed with
     - Generated images include a "TRAINING MODE" watermark
     - Designed as a learning tool, not a replacement for the real experience
         
+- **Extended Options (NEW)**: Deepen your commitment with optional flags that enrich the boot sequence:
+    - `--when`: Set a deadline for starting your commitment
+    - `--first-step`: Define the very first micro-action you'll take
+    - `--why`: Clarify your personal motivation
+    - `--milestone`: Set an intermediate goal to track progress
+    - When used, these options create a rich, tree-structured output showing your complete action plan
+        
+- **Internationalization (NEW)**: Automatic language detection for a seamless experience:
+    - Detects Japanese characters in your input and switches the entire interface to Japanese
+    - All messages, errors, help text, and social sharing are localized
+    - No manual configuration needed—just type in your preferred language
+        
+- **Shell Environment Commands**: Standard Unix commands for an authentic terminal experience:
+    - `ls`: List files in the current directory
+    - `cat <file>`: Display file contents (try `cat README.md` or `cat vision.txt`)
+    - `clear`: Clear the terminal screen
+    - `pwd`: Print working directory (`/home/future/architect`)
+    - `whoami`: Display current user (`builder`)
+    - `help`: Show available commands
+        
 - **Success & Failure States**:
     
     - If the command is run without the required flags, a `[FATAL]` error is displayed, along with a `USAGE` guide and a philosophical tip.
@@ -108,7 +128,15 @@ These commands make the environment feel more authentic and help users familiari
 # Standard execution (recommended)
 ./boot_future.sh --vision "sustainable cities everywhere" --commit "bike to work this week"
 
-# Alternative format (also works)
+# With extended options for a detailed action plan
+./boot_future.sh --vision "become a web developer" --commit "complete online course" \
+  --first-step "install VS Code today" --milestone "build portfolio site" \
+  --why "create impactful solutions" --when "2025-01-01"
+
+# Japanese input (interface auto-switches to Japanese)
+./boot_future.sh --vision "持続可能な社会" --commit "今日から自転車通勤"
+
+# Alternative format (also works without ./)
 boot_future.sh --vision "sustainable cities everywhere" --commit "bike to work this week"
 
 # Get help
@@ -118,7 +146,11 @@ boot_future.sh --vision "sustainable cities everywhere" --commit "bike to work t
 ./boot_future.sh --interactive
 
 # Basic shell commands
-ls          # See available files
+ls          # See available files (boot_future.sh, README.md, vision.txt)
+cat README.md   # View this documentation
+cat vision.txt  # See a motivational message
+pwd         # Show current directory (/home/future/architect)
+whoami      # Display current user (builder)
 help        # Get command help
 clear       # Clean up the terminal
 ```
@@ -143,47 +175,22 @@ The "error-first" design ensures that every successful boot feels meaningful. Th
     
 - **Deployment**: Hosted on [Vercel](https://vercel.com/ "null").
 
-## Future Development
+## Recently Implemented Features
 
-While the core experience is intentionally minimal, we're exploring ways to enhance accessibility without compromising the core message. The following features are under consideration:
+### ✅ Interactive Mode (Phase 1 - Complete)
+The guided mode for CLI beginners is now live! Access it with `./boot_future.sh --interactive` to get step-by-step prompts for creating your vision and commitment.
 
-### 🌐 Internationalization (i18n)
+### ✅ Internationalization (Phase 2 - Complete)
+Automatic language detection is now active:
+- Type in Japanese, and the entire interface switches to Japanese automatically
+- All messages, errors, help text, and social sharing are fully localized
+- No manual configuration needed—just type in your preferred language
 
-Automatic language detection based on the content of vision/commit inputs:
-- Japanese interface when Japanese characters are detected
-- English interface as default
-- Seamless switching without manual configuration
-
-### 🤖 AI-Powered Vision Generator (Under Consideration)
-
-For those who have a concrete action but struggle to see the bigger picture:
-
-```bash
-$ ./boot_future.sh --ai-vision --commit "practice guitar for 30 minutes daily"
-
-[AI VISION GENERATOR] Analyzing your commit...
-
-Your daily 30-minute guitar practice could lead to:
-- 1 month: Basic chord mastery and rhythm improvement
-- 1 year: Performance-ready skills and musical expression
-- 3 years: Inspiring others through music, possibly teaching
-
-Suggested vision: "A world where everyone expresses their soul through music"
-
-Use this vision? (y/n):
-```
-
-**Technical Approach:**
-- Minimal API calls with efficient prompts (target: <100 tokens per request)
-- Local caching of common patterns to reduce costs
-- Privacy-first: commits are processed but never stored
-
-### 🎯 Extended Options (Under Consideration)
-
-Additional optional flags to deepen commitment without overwhelming simplicity:
+### ✅ Extended Options (Phase 3 - Complete)
+The optional flags for deeper commitment are now available:
 
 ```bash
-# Core (Required) - Unchanged
+# Core (Required)
 --vision "your future vision"
 --commit "your immediate action"
 
@@ -194,13 +201,12 @@ Additional optional flags to deepen commitment without overwhelming simplicity:
 --milestone "app launch in 3mo"  # Intermediate goal
 ```
 
-**Impact on Output:**
-The more details provided, the richer the boot sequence:
+When you use extended options, the output becomes richer:
 
 ```
 # Minimal (vision + commit only)
 Future process started successfully. (PID: 20241225)
-Daemonizing... Your future is now running in the background.
+Daemonizing... Your future is now running in the background. Keep committing.
 
 # Detailed (with optional flags)
 Future process started successfully. (PID: 20241225)
@@ -208,23 +214,26 @@ Future process started successfully. (PID: 20241225)
 ├── Milestone: App launch in 3 months
 ├── Driven by: For my children
 └── Deadline: 2024-12-31
-Daemonizing... Your future is now running in the background.
+Daemonizing... Your future is now running in the background. Keep committing.
 ```
 
-### 📋 Additional Planned Features
+## Future Development
+
+### 📋 Planned Features
 
 - **Command history persistence**: Remember your past futures across sessions
 - **Achievement system**: Unlock easter eggs for power users
 - **Export formats**: Generate wallpapers, calendar events, or reminder cards
 - **Community futures**: Anonymously share and discover inspiring vision/commit pairs
+- **AI-powered vision suggestions**: For those who have actions but need help seeing the bigger picture
 
 ### Implementation Timeline
 
-1. **Phase 1 (Current)**: Interactive mode implementation
-2. **Phase 2**: Internationalization (Japanese/English)
-3. **Phase 3**: Extended options system
-4. **Phase 4**: AI integration (pending cost analysis)
+1. **Phase 1**: ✅ Interactive mode (Complete)
+2. **Phase 2**: ✅ Internationalization (Complete)
+3. **Phase 3**: ✅ Extended options system (Complete)
+4. **Phase 4**: Community features and additional export formats (Planned)
 
-> **Note**: AI-powered features and extended options are still under consideration. We're carefully evaluating how to implement these without diluting the core message that "futures require deliberate effort." The timeline and final feature set may change based on community feedback and testing.
+> **Note**: We're continuously evaluating new features based on community feedback while maintaining the core philosophy that "futures require deliberate effort."
 
 What's your first commit?
