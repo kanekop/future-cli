@@ -10,7 +10,7 @@ _(You can replace this with a link to your own screenshot)_
 
 The future isn't something you wait for; it's something you build, one commit at a time. This project embodies that philosophy through deliberate design choices:
 
-- **Friction by Design**: Simply running `./boot_future.sh` results in an error. This isn't a bug—it's the core message. Your future requires explicit vision and commitment.
+- **Friction by Design**: Simply running `./future.sh` results in an error. This isn't a bug—it's the core message. Your future requires explicit vision and commitment.
 - **Learning Through Failure**: The error-to-success journey mirrors real life. Understanding what's needed is part of the process.
 - **Authentic Achievement**: When you finally boot your future with the right parameters, the success feels earned.
 
@@ -20,11 +20,12 @@ This project is a single, self-contained `index.html` file, but it's packed with
 
 - **Realistic Terminal Interface**: A CLI-like environment simulated entirely in your browser, featuring a blinking cursor, colored output, and a familiar prompt (`$`).
 
-- **Intro Animation (NEW)**: When you first visit the page, an automated demo plays showing someone attempting to boot their future incorrectly:
-    - Auto-types `./boot_future.sh` with realistic timing
+- **Intro Animation**: When you first visit the page, an automated demo plays showing someone attempting to boot their future incorrectly:
+    - Auto-types `./future.sh` with realistic timing
     - Shows the error message and usage instructions
     - Teaches new users what they need to do
     - Takes about 3 seconds total, creating anticipation
+    - Can be skipped by pressing ESC
     
 - **The Boot Command**: The core of the experience. Users must provide two critical flags to boot their future:
     
@@ -33,7 +34,7 @@ This project is a single, self-contained `index.html` file, but it's packed with
     - `--commit`: A string describing the first, concrete action you will take.
         
 - **Interactive Mode (Training Mode)**: For those new to CLI, there's a guided mode that teaches the proper command structure:
-    - Accessed via `./boot_future.sh --interactive`
+    - Accessed via `./future.sh --interactive`
     - Walks users through the process step-by-step
     - Shows the correct command format at the end
     - Generated images include a "TRAINING MODE" watermark
@@ -46,20 +47,23 @@ This project is a single, self-contained `index.html` file, but it's packed with
     - `--milestone`: Set an intermediate goal to track progress
     - When used, these options create a rich, tree-structured output showing your complete action plan
         
-- **Internationalization (NEW)**: Automatic language detection for a seamless experience:
+- **Internationalization**: Automatic language detection for a seamless experience:
+    - Detects language at page load using multiple methods (URL parameter, saved preference, browser language)
+    - Supports URL parameters: `?lang=ja` or `?lang=en` for direct language selection
+    - Saves language preference in browser for future visits
     - Detects Japanese characters in your input and switches the entire interface to Japanese
-    - All messages, errors, help text, and social sharing are localized
-    - No manual configuration needed—just type in your preferred language
+    - All messages, errors, help text, and social sharing are fully localized
+    - Manual language switching available with `lang [ja|en]` command
         
 - **Shell Environment Commands**: Standard Unix commands for an authentic terminal experience:
     - `ls`: List files in the current directory
     - `cat <file>`: Display file contents with tab completion support:
         - Type `cat ` and press Tab to see available files
         - Type `cat R` and press Tab to auto-complete to `cat README.md`
-        - `cat boot_future.sh` shows "Permission denied" (the source is protected)
+        - `cat future.sh` shows "Permission denied" (the source is protected)
         - Supports `README.md` and `vision.txt` for reading
     - `clear`: Clear the terminal screen
-    - `pwd`: Print working directory (`/home/future/architect`)
+    - `pwd`: Print working directory (`/home/future/commits`)
     - `whoami`: Display current user (`builder`)
     - `help`: Show available commands
         
@@ -69,7 +73,7 @@ This project is a single, self-contained `index.html` file, but it's packed with
         
     - On successful execution, the app displays a log of your future being initiated, including the iconic `Daemonizing... Your future is now running in the background. Keep committing.` message.
         
-- **Command History**: Just like a real terminal, you can navigate through your past commands using the `ArrowUp` and `ArrowDown` keys. The initial `./boot_future.sh` command is pre-loaded into the history for convenience.
+- **Command History**: Just like a real terminal, you can navigate through your past commands using the `ArrowUp` and `ArrowDown` keys. The initial `./future.sh` command is pre-loaded into the history for convenience.
     
 - **Perfectly Cropped Snapshot**: After a successful boot, a shareable image (`.png`) is automatically generated. This snapshot is intelligently cropped to include the entire story of your session—from the initial "error" message to your successful command execution—with no wasted space.
     
@@ -91,10 +95,10 @@ This project is a single, self-contained `index.html` file, but it's packed with
 3. At the prompt, type your command using the following format. You can use single (`'`) or double (`"`) quotes.
     
     ```
-    ./boot_future.sh --vision "a world where everyone can create" --commit "start learning to code today"
+    ./future.sh --vision "a world where everyone can create" --commit "start learning to code today"
     ```
     
-    Note: Both `./boot_future.sh` and `boot_future.sh` are accepted, though the former follows proper shell conventions for executing local scripts.
+    Note: All variations work: `future`, `./future`, `future.sh`, and `./future.sh`. The `./future.sh` format follows proper shell conventions for executing local scripts.
     
 4. Press `Enter`.
     
@@ -107,7 +111,7 @@ This project is a single, self-contained `index.html` file, but it's packed with
 
 For those unfamiliar with command-line interfaces:
 
-1. Type `./boot_future.sh --interactive`
+1. Type `./future.sh --interactive`
     
 2. Follow the guided prompts to enter your vision and commitment
     
@@ -123,11 +127,12 @@ To enhance the CLI experience, the following standard shell commands are also av
 
 ```bash
 ls          # List files in current directory
-cat         # Display file contents
+cat         # Display file contents (with tab completion)
 clear       # Clear the terminal
 pwd         # Print working directory
 whoami      # Display current user
 help        # Show help message
+lang        # Switch language (ja/en)
 ```
 
 These commands make the environment feel more authentic and help users familiarize themselves with basic shell operations.
@@ -136,34 +141,41 @@ These commands make the environment feel more authentic and help users familiari
 
 ```bash
 # Standard execution (recommended)
-./boot_future.sh --vision "sustainable cities everywhere" --commit "bike to work this week"
+./future.sh --vision "sustainable cities everywhere" --commit "bike to work this week"
+
+# All command variations work
+future --vision "change the world" --commit "start today"
+./future --vision "better tomorrow" --commit "act now"
+future.sh --vision "green planet" --commit "plant trees"
 
 # With extended options for a detailed action plan
-./boot_future.sh --vision "become a web developer" --commit "complete online course" \
+./future.sh --vision "become a web developer" --commit "complete online course" \
   --first-step "install VS Code today" --milestone "build portfolio site" \
   --why "create impactful solutions" --when "2025-01-01"
 
 # Japanese input (interface auto-switches to Japanese)
-./boot_future.sh --vision "持続可能な社会" --commit "今日から自転車通勤"
+./future.sh --vision "持続可能な社会" --commit "今日から自転車通勤"
 
-# Alternative format (also works without ./)
-boot_future.sh --vision "sustainable cities everywhere" --commit "bike to work this week"
+# Direct language selection via URL
+# Visit: https://the-future.sh/?lang=ja
 
 # Get help
-./boot_future.sh --help
+./future.sh --help
 
 # Interactive mode (for learning)
-./boot_future.sh --interactive
+./future.sh --interactive
 
 # Basic shell commands
-ls          # See available files (boot_future.sh, README.md, vision.txt)
+ls              # See available files (future.sh, README.md, vision.txt)
 cat README.md   # View this documentation (supports tab completion)
 cat vision.txt  # See a motivational message
-cat b[TAB]      # Auto-completes to boot_future.sh (but shows permission denied)
-pwd         # Show current directory (/home/future/architect)
-whoami      # Display current user (builder)
-help        # Get command help
-clear       # Clean up the terminal
+cat f[TAB]      # Auto-completes to future.sh (but shows permission denied)
+pwd             # Show current directory (/home/future/commits)
+whoami          # Display current user (builder)
+help            # Get command help
+clear           # Clean up the terminal
+lang ja         # Switch to Japanese
+lang en         # Switch to English
 ```
 
 ## The Design Philosophy
@@ -188,30 +200,41 @@ The "error-first" design ensures that every successful boot feels meaningful. Th
 
 ## Recently Implemented Features
 
+### ✅ Command Rename to future.sh (Complete)
+The main command has been simplified from `boot_future.sh` to `future.sh`:
+- Accepts multiple variations: `future`, `./future`, `future.sh`, `./future.sh`
+- All references throughout the interface have been updated
+- File system shows `future.sh` when using `ls` command
+- Maintains backward compatibility in documentation
+
 ### ✅ Intro Animation (Complete)
 An automated demonstration plays when you first visit the page:
-- Shows someone attempting to run `./boot_future.sh` without parameters
+- Shows someone attempting to run `./future.sh` without parameters
 - Displays the error message to teach proper usage
 - Uses realistic typing animation with varied speeds
 - Creates anticipation and normalizes the "failure" experience
+- Can be skipped by pressing ESC
 
 ### ✅ Enhanced Cat Command (Complete)
 The `cat` command now includes tab completion and special file handling:
 - Press Tab after `cat ` to see available files
 - Auto-completes partial filenames (e.g., `cat R[TAB]` → `cat README.md`)
-- `cat boot_future.sh` shows "Permission denied" to maintain the mystery
+- `cat future.sh` shows "Permission denied" to maintain the mystery
 - Full Unix-like tab completion behavior
 
-### ✅ Interactive Mode (Phase 1 - Complete)
-The guided mode for CLI beginners is now live! Access it with `./boot_future.sh --interactive` to get step-by-step prompts for creating your vision and commitment.
+### ✅ Interactive Mode (Complete)
+The guided mode for CLI beginners is now live! Access it with `./future.sh --interactive` to get step-by-step prompts for creating your vision and commitment.
 
-### ✅ Internationalization (Phase 2 - Complete)
+### ✅ Internationalization (Complete)
 Automatic language detection is now active:
+- Language detected at page load (URL parameter → saved preference → browser language)
+- Direct language selection via URL: `?lang=ja` or `?lang=en`
+- Manual switching with `lang [ja|en]` command
 - Type in Japanese, and the entire interface switches to Japanese automatically
 - All messages, errors, help text, and social sharing are fully localized
-- No manual configuration needed—just type in your preferred language
+- Language preference saved for future visits
 
-### ✅ Extended Options (Phase 3 - Complete)
+### ✅ Extended Options (Complete)
 The optional flags for deeper commitment are now available:
 
 ```bash
