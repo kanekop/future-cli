@@ -171,6 +171,31 @@
         let interactiveCommit = '';
         let currentLanguage = 'en'; // default to English
         
+        // Language detection function
+        function detectUserLanguage() {
+            // 1. Check URL parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlLang = urlParams.get('lang');
+            if (urlLang === 'ja' || urlLang === 'en') {
+                return urlLang;
+            }
+            
+            // 2. Check localStorage
+            const storedLang = localStorage.getItem('preferredLanguage');
+            if (storedLang === 'ja' || storedLang === 'en') {
+                return storedLang;
+            }
+            
+            // 3. Check browser language
+            const browserLang = navigator.language || navigator.languages[0];
+            if (browserLang.startsWith('ja')) {
+                return 'ja';
+            }
+            
+            // 4. Default to English
+            return 'en';
+        }
+        
         // File system structure
         const fileSystem = {
             'README.md': {
@@ -258,11 +283,11 @@
                 deadline: 'Deadline'
             },
             ja: {
-                fatal: '[致命的エラー] コアコンポーネントが不足しています。未来を初期化できません。',
+                fatal: '[致命的エラー] コアコンポーネントが不足しています。未来を起動できません。',
                 requiredFlags: '        必須フラグ: --vision, --commit',
                 usage: '使用方法:',
                 usageExample: '  ./boot_future.sh --vision "〜な世界" --commit "今すぐやること"',
-                tip: '# ヒント: コミットなきビジョンは、ただの願望です。',
+                tip: '# ヒント: 未来を語るにはビジョンが必要です。ビジョンを夢で終わらせないためにはコミットが必要です。',
                 interactiveWelcome: '[対話モード] 未来起動プロセスへようこそ！',
                 interactiveIntro: 'このモードでは、ビジョンとコミットメントを段階的に作成できます。',
                 interactiveVisionPrompt: 'あなたの未来のビジョンは何ですか？（入力してEnterを押してください）',
@@ -345,6 +370,15 @@
 
         // --- Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
+            // Detect user language at the very beginning
+            currentLanguage = detectUserLanguage();
+            
+            // Save to localStorage for next time
+            localStorage.setItem('preferredLanguage', currentLanguage);
+            
+            // Apply language to HTML element
+            document.documentElement.lang = currentLanguage;
+            
             terminal.addEventListener('click', () => {
                 if (currentInput) {
                     currentInput.focus();
@@ -399,7 +433,7 @@
             
             // Handle tab completion for commands
             if (parts.length === 1 && !currentValue.includes(' ')) {
-                const commands = ['cat', 'ls', 'clear', 'pwd', 'whoami', 'help', './boot_future.sh', 'boot_future.sh'];
+                const commands = ['cat', 'ls', 'clear', 'pwd', 'whoami', 'help', 'lang', './boot_future.sh', 'boot_future.sh'];
                 const partial = parts[0];
                 
                 const matches = commands.filter(cmd => 
@@ -577,6 +611,19 @@
                 addLine(t('cmdPwd'));
                 addLine(t('cmdWhoami'));
                 addLine(t('cmdHelpCmd'));
+                addLine('  lang [ja|en]                                              - Switch language');
+                createInputLine();
+                return;
+            } else if (cmd === 'lang') {
+                if (parts[1] === 'ja' || parts[1] === 'en') {
+                    currentLanguage = parts[1];
+                    localStorage.setItem('preferredLanguage', currentLanguage);
+                    document.documentElement.lang = currentLanguage;
+                    addLine(`Language switched to ${parts[1] === 'ja' ? 'Japanese' : 'English'}`);
+                    addLine('Reload the page to see the full effect.');
+                } else {
+                    addLine('Usage: lang [ja|en]');
+                }
                 createInputLine();
                 return;
             }
