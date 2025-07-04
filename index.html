@@ -545,7 +545,7 @@
             
             // Handle tab completion for commands
             if (parts.length === 1 && !currentValue.includes(' ')) {
-                const commands = ['cat', 'ls', 'clear', 'pwd', 'whoami', 'help', 'lang', 'future', './future', 'future.sh', './future.sh'];
+                const commands = ['cat', 'ls', 'clear', 'pwd', 'whoami', 'help', 'about', 'lang', 'future', './future', 'future.sh', './future.sh'];
                 const partial = parts[0];
                 
                 const matches = commands.filter(cmd => 
@@ -728,9 +728,29 @@
                 addLine(t('cmdPwd'));
                 addLine(t('cmdWhoami'));
                 addLine(t('cmdHelpCmd'));
+                addLine('  about                                                     - About this project');
                 addLine('  lang [ja|en]                                              - Switch language');
                 addLine('  share-last                                                - Share your last booted future');
                 addLine(`  guide                                                     - ${currentLanguage === 'ja' ? '初心者向けガイドモードを開始' : 'Start beginner-friendly guided mode'}`);
+                addLine('');
+                addLine('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                addLine('the-future.sh v1.0');
+                addLine('Created by Kaneko (<span class="log-info">@poknam</span>)');
+                addLine('https://github.com/kanekop/the-future-sh');
+                createInputLine();
+                return;
+            } else if (cmd === 'about') {
+                addLine('the-future.sh - A tiny CLI simulator to boot your future');
+                addLine('');
+                addLine('Version: 1.0');
+                addLine('');
+                addLine('Created with ❤️ by Kaneko');
+                addLine('');
+                addLine('🐦 X (Twitter): <span class="log-info">https://x.com/poknam</span>');
+                addLine('🐙 GitHub: <span class="log-info">https://github.com/kanekop</span>');
+                addLine('📦 Project: <span class="log-info">https://github.com/kanekop/the-future-sh</span>');
+                addLine('');
+                addLine('<span class="log-tip">Remember: A vision without a commit is just a dream.</span>');
                 createInputLine();
                 return;
             } else if (cmd === 'lang') {
@@ -1463,7 +1483,7 @@
         function isValidCommand(command) {
             const cmd = command.split(' ')[0];
             const validCommands = [
-                'ls', 'cat', 'clear', 'pwd', 'whoami', 'help', 'lang', 
+                'ls', 'cat', 'clear', 'pwd', 'whoami', 'help', 'about', 'lang', 
                 'share-last', 'guide', 'ガイド',
                 'future', './future', 'future.sh', './future.sh'
             ];
